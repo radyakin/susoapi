@@ -29,28 +29,44 @@ def checkapi(server,apiname,apipass):
   headers = {'Content-type': 'application/json'}
   credentials=(apiname,apipass)
   print(server)
-  y=requests.get(
+  try:
+    y=requests.get(
       server+"/api/v1/settings/globalnotice/",
       headers=headers, 
       data={},
       auth=credentials)
-  print(y.json()['Message'])
+    if (y.status_code!=200):
+      return -y.status_code
+    print(y.json()['Message'])
+  except:
+    return -1
   return 0
   
 def check(server, apiname, apipass):
-  if (checkurl(server) < 0):
+  c=checkurl(server)
+  if (c < 0):
     return -1
-  if (checkserver(server) < 0):
+  
+  c=checkserver(server)
+  if (c < 0):
     return -1
-  if (checkapi(server,apiname,apipass) < 0):
+  
+  c=checkapi(server,apiname,apipass)
+  if (c < 0):
+    if (c==-401):
+      SFIToolkit.errprint("Server responded: 401 Unauthorized.")
+      SFIToolkit.errprintln("Please check that the API user name and password are valid for this server.")
+      return c
     return -1
+
   print("Server OK")
   return 0
 
 def export(server,apiname,apipass):
   # returns number of bytes in the saved file or a negative code if failed
-
-  if (check(server, apiname, apipass) < 0):
+  c=check(server, apiname, apipass)
+  if (c < 0):
+    Macro.setLocal("downloaded",str(c))
     return
   
   const_delay=0.2
@@ -90,16 +106,30 @@ def export(server,apiname,apipass):
           data={},
           auth=credentials)
         exportStatus=y.json()['ExportStatus']
+    else:
+      print("Something went wrong! Could not initiate a new data export job.")
+      Macro.setLocal("downloaded",str(-1))
+      return
 
+    print(exportStatus, y.json()['Progress'],"%")
     if (not y.json()['HasExportFile']):
-      print("Something went wrong! The export job has been completed, but the export file was not produced by the server.")
+      print("Something went wrong! The data export job has been completed, but the export file was not produced by the server.")
       Macro.setLocal("downloaded",str(-1))
       return
 
     links=y.json()['Links']
     file=links['Download']
-    
-    filedata = requests.get(file, auth=credentials, allow_redirects=True)
+
+    # // temporary fix until the problem with download not ready is solved
+    print("Downloading: "+file)
+    c=1
+    s=400
+    while((s!=200) and (c<const_maxcycles)):
+      filedata = requests.get(file, auth=credentials, allow_redirects=True)
+      s=filedata.status_code
+      print(c," ",s)
+      c=c+1
+
     with open(saveto, 'wb') as file:
       file.write(filedata.content)
     Macro.setLocal("downloaded",str(len(filedata.content)))

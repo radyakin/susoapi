@@ -94,12 +94,6 @@ program define suso_export2
 
   local qry = `" { "ExportType": "`exporttype'", "QuestionnaireId": "`qid'", "TranslationId": "`translationid'", "InterviewStatus": "`status'" `datefilter', "IncludeMeta":"`includemeta'" } "'
   
-  // verify the site exists
-  // tempfile tmp
-  // # copy "`server'/.hc" `"`tmp'"'
-  local surl=`"`server'"'
-  local surlhc=`"`server'/.hc"'
-  
   local downloaded=0
   
   capture noisily python : doexportdata("`server'","`apiname'","`apipass'")
