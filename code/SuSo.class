@@ -533,6 +533,158 @@ def users_actionslog(server, apiname, apipass, guid, datefrom, dateto):
         n=Data.getObsTotal()-1
         Data.storeAt("time",    n,s["Time"])
         Data.storeAt("message", n,s["Message"])
+
+def servepatch(URL):
+    # // Serves a PATCH request
+    headers = {'Content-type': 'application/json'}
+    response=requests.patch(URL,headers=headers,data={},auth=get_credentials())
+    print(response.status_code)
+    return response
+def servepatchdata(URL, content):
+    # // Serves a PATCH request with data
+    headers = {'Content-type': 'application/json-patch+json'}
+    response=requests.patch(URL,headers=headers,json=content,auth=get_credentials())
+    print(response.status_code)
+    return response
+def servepostdata(URL, content):
+    # // Serves a POST request with data
+    headers = {'Content-type': 'application/json-patch+json'}
+    response=requests.post(URL,headers=headers,json=content,auth=get_credentials())
+    print(response.status_code)
+    return response
+def serveget(URL):
+    # // Serves a GET request
+    headers = {'Content-type': 'application/json'}
+    response=requests.get(URL,headers=headers,data={},auth=get_credentials())
+    print(response.status_code)
+    return response
+def servedelete(URL):
+    # // Serves a DELETE request
+    headers = {'Content-type': 'application/json'}
+    response=requests.delete(URL,headers=headers,data={},auth=get_credentials())
+    print(response.status_code)
+    return response
+
+def interviews_approve(guid, comment):
+    # // Approves interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}/approve?comment={requests.utils.quote(comment)}'
+    response=servepatch(URL)
+
+def interviews_reject(guid, comment, responsibleguid):
+    # // Rejects interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}/reject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}'
+    response=servepatch(URL)
+
+def interviews_hqunapprove(guid, comment):
+    # // HQ-recalls interview from approved status
+    URL=f'{get_server()}/api/v1/interviews/{guid}/hqunapprove?comment={requests.utils.quote(comment)}'
+    response=servepatch(URL)
+
+def interviews_approve(guid, comment):
+    # // HQ-approves interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}/hqapprove?comment={requests.utils.quote(comment)}'
+    response=servepatch(URL)
+    
+def interviews_hqreject(guid, comment, responsibleguid):
+    # // HQ-rejects interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}/hqreject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}'
+    response=servepatch(URL)
+
+def interviews_getpdf(guid):
+    # // Get a transcript of interview in PDF
+    URL=f'{get_server()}/api/v1/interviews/{guid}/pdf'
+    response=serveget(URL)
+    saveto=Macro.getLocal("saveto")
+    with open(saveto, 'wb') as file:
+      file.write(response.content)
+
+def interviews_getstats(guid):
+    # // Get a transcript of interview in PDF
+    URL=f'{get_server()}/api/v1/interviews/{guid}/stats'
+    response=serveget(URL)
+    rsavejson(response.json())
+    
+def interviews_gethistory(guid):
+    # // Get history of interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}/history'
+    response=serveget(URL)
+    for a in response.json()["Records"]:
+      Data.addObs(1)
+      n=Data.getObsTotal()-1
+      if a["Timestamp"]!=None: 
+        Data.storeAt("timestamp",       n, a["Timestamp"])
+      if a["Offset"]!=None: 
+        Data.storeAt("offset",          n, a["Offset"])
+      if a["Action"]!=None: 
+        Data.storeAt("action",          n, a["Action"])
+      if a["OriginatorName"]!=None: 
+        Data.storeAt("originator_name", n, a["OriginatorName"])
+      if a["OriginatorRole"]!=None: 
+        Data.storeAt("originator_role", n, a["OriginatorRole"])
+      if a["Parameters"]!=None: 
+        Data.storeAt("parameters",      n, str(a["Parameters"]))
+        
+def interviews_getanswers(guid):
+    # // Get answers of interview
+    URL=f'{get_server()}/api/v1/interviews/{guid}'
+    response=serveget(URL)
+    for a in response.json()["Answers"]:
+      Data.addObs(1)
+      n=Data.getObsTotal()-1
+      if a["VariableName"]!=None: 
+        Data.storeAt("variablename", n, a["VariableName"])
+
+      qid=a["QuestionId"]
+
+      if qid!=None:
+        Data.storeAt("questionid",   n, qid["Id"])
+        if qid["RosterVector"]!=None: 
+          Data.storeAt("rostervector", n, str(qid["RosterVector"]))
+
+      if a["Answer"]!=None: 
+        Data.storeAt("answer",       n, a["Answer"])
+
+def rsavejson(jsonobj):
+    # // Saves JSON object to r()-results
+    for (k, v) in jsonobj.items (): 
+      if (isinstance(v,str)):
+        Macro.setGlobal(f"r({k})", v)
+      else:
+        Scalar.setValue(f"r({k})", v)
+        
+        
+def interviews_delete(guid):
+  # // Delete an interview from the server
+  headers = {'Content-type': 'application/json-patch+json'}
+  URL=get_server()+"/api/v1/interviews/"+guid
+  response=requests.delete(URL, headers=headers, auth=get_credentials())
+  print(response.status_code)
+  
+  # // 406 for completed interviews ???
+  
+def interviews_assign(intguid, responsibleguid):
+    # // Assigns interview to interviewer
+    URL=f'{get_server()}/api/v1/interviews/{intguid}/assign'
+    data={"ResponsibleId":responsibleguid}
+    response=servepatchdata(URL,data)  
+
+def interviews_assignsupervisor(intguid, responsibleguid):
+    # // Assigns interview to supervisor
+    URL=f'{get_server()}/api/v1/interviews/{intguid}/assignsupervisor'
+    data={"ResponsibleId":responsibleguid}
+    response=servepatchdata(URL,data)  
+
+def interviews_comment(interviewguid, questionguid, comment):
+    # // Add comment to question in interview
+    URL=f'{get_server()}/api/v1/interviews/{interviewguid}/comment/{questionguid}?comment={requests.utils.quote(comment)}'
+    response=servepostdata(URL, None)
+
+def interviews_varcomment(interviewguid, varname, rosteraddress, comment):
+    # // Add comment to question in interview
+    URL=f'{get_server()}/api/v1/interviews/{interviewguid}/comment-by-variable/{varname}?{rosteraddress}comment={requests.utils.quote(comment)}'
+    response=servepostdata(URL, None)
+        
+        
         
 end
 
@@ -568,11 +720,14 @@ program define .new
     .versionstr="`ver'"
 
     // display greeting
+    display as text "{break}"    
+    display as text `"Survey Solutions API wrapper for Stata version `.wrapperver'"'
+    display as text `"{stata "adoupdate susoapi":Check for updates}"'
+
     display as text "{break}"
     display as text `"Survey Solutions data server"'
     display as text `"{browse "`.server'":`.server'}"'
     display as text `"`.versionstr'"'
-    display as text `"API wrapper for Stata version `.wrapperver'"'
 
     // Now check the server for responding
     python: Macro.setLocal("c",str(check("`.server'", "`.username'", "`.password'")))
@@ -582,6 +737,12 @@ program define .new
     display as text "Here are just some things you could do:"
     display as text `"- {stata ".`.objkey'.qx_list":get list of all questionnaires}"'
     display as text `"- {stata ".`.objkey'.users_supervisors":get list of all supervisors}"'
+    
+    display as text "{break}"
+    display as text "Additional information:"
+    display as text `"- Survey Solutions {browse "`.server'/apidocs/":API documentation}"'
+    display as text `"- Survey Solutions {browse "https://support.mysurvey.solutions":support site}"'
+    
 end
 
 program .set
@@ -908,6 +1069,144 @@ program define export2
   }
   
   display as text `"file `saveto' saved (`=string(`downloaded',"%20.0gc")' bytes)"'
+end
+
+
+program define .interviews_approve
+    version 16.0
+    args guid comment
+    python: interviews_approve("`guid'", "`comment'")
+end
+
+program define .interviews_reject
+    version 16.0
+    args guid comment responsible
+    python: interviews_reject("`guid'", "`comment'","`responsible'")
+end
+
+program define .interviews_hqunapprove
+    version 16.0
+    args guid comment
+    python: interviews_reject("`guid'", "`comment'")
+end
+
+program define .interviews_hqapprove
+    version 16.0
+    args guid comment
+    python: interviews_hqapprove("`guid'", "`comment'")
+end
+
+program define .interviews_hqreject
+    version 16.0
+    args guid comment responsible
+    python: interviews_hqreject("`guid'", "`comment'","`responsible'")
+end
+
+program define .interviews_getpdf
+    version 16.0
+    args guid saveto
+    python: interviews_getpdf("`guid'")
+end
+
+program define .interviews_getstats
+    version 16.0
+    args guid
+    python: interviews_getstats("`guid'")
+end
+
+program define .interviews_gethistory
+    version 16.0
+    args guid framename
+     if !missing(`"`framename'"') {
+      frame create `framename'
+      frame change `framename'
+    }
+    clear
+    
+    generate str40 timestamp=""
+    generate str20 offset=""
+    generate str40 action=""
+    generate str40 originator_name=""
+    generate str40 originator_role=""
+    generate strL parameters=""
+    
+    python: interviews_gethistory("`guid'")
+    compress
+end
+
+program define .interviews_getanswers
+    version 16.0
+    args guid framename
+     if !missing(`"`framename'"') {
+      frame create `framename'
+      frame change `framename'
+    }
+    clear
+    
+    generate str32 variablename=""
+    generate str40 questionid  =""
+    generate strL  rostervector=""
+    generate strL  answer      =""
+    
+    python: interviews_getanswers("`guid'")
+    compress
+end
+
+program define .interviews_delete
+    version 16.0
+    args guid
+    python: interviews_delete("`guid'")
+end
+
+program define .interviews_assign
+    // by responsible GUID only
+    version 16.0
+    args intguid responsibleguid
+    python: interviews_assign("`intguid'","`responsibleguid'")
+end
+
+program define .interviews_assignsupervisor
+    // by responsible GUID only
+    version 16.0
+    args intguid responsibleguid
+    python: interviews_assignsupervisor("`intguid'","`responsibleguid'")
+end
+
+program define .interviews_comment
+    // Add comment to a particular question
+    version 16.0
+    syntax, interviewguid(string) questionguid(string) ///
+            comment(string) [rostervector(string)]
+    local questionguid=subinstr(`"`questionguid'"',"-","",.) + "_`rostervector'"
+    // rostervector (if specified) is expected to be formatted 
+    // according to the Survey Solutions rules:
+    // specifically as #, or #-#, or #-#-#, or #-#-#-#
+    // todo: add validation here
+    python: interviews_comment("`interviewguid'", "`questionguid'", "`comment'")
+end
+
+program define .rostervectoraddress, rclass
+  // Converts a RosterVectorAddress written in 
+  // the Survey Solutions convention into a 
+  // fragment of an URL query.
+  version 16.0
+  args rva
+  if missing(`"`rva'"') exit
+  local word "rosterVector"
+  local rva=subinstr(`"`rva'"',"-","&`word'=",.)
+  local rva=subinstr(`"`word'=`rva'"',"`word'=&`word'=","`word'=-",.)
+  return local result `"`rva'&"'
+end
+
+program define .interviews_varcomment
+    version 16.0
+    syntax, interviewguid(string) varname(string) ///
+            comment(string) [rostervector(string)]
+    // Add comment to a particular question
+    .rostervectoraddress `rostervector'
+    local rva=r(result)
+    python: interviews_varcomment("`interviewguid'", "`varname'", "`rva'", "`comment'")
+     // Undocumented server response 406 if rosterVector is misspecified
 end
 
 
