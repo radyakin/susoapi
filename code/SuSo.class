@@ -13,6 +13,7 @@ class SuSo {
 }
 
 python:
+import numbers
 import time
 import requests
 from sfi import Macro, Data, Scalar, SFIToolkit
@@ -75,6 +76,14 @@ def check(server, apiname, apipass):
 
   print("Server OK")
   return 0
+
+def get_server():
+    return SFIToolkit.macroExpand("`=char(96)'.server`=char(39)'")
+
+def get_credentials():
+    username=SFIToolkit.macroExpand("`=char(96)'.username`=char(39)'")
+    password=SFIToolkit.macroExpand("`=char(96)'.password`=char(39)'")
+    return (username,password)  
 
 def export(server,apiname,apipass):
   # returns number of bytes in the saved file or a negative code if failed
@@ -646,12 +655,20 @@ def interviews_getanswers(guid):
 
 def rsavejson(jsonobj):
     # // Saves JSON object to r()-results
-    for (k, v) in jsonobj.items (): 
+    for (k, v) in jsonobj.items ():
+      # print(k)
+      # print(v)
       if (isinstance(v,str)):
         Macro.setGlobal(f"r({k})", v)
       else:
-        Scalar.setValue(f"r({k})", v)
-        
+        if (isinstance(v, numbers.Number)):
+          Scalar.setValue(f"r({k})", v)
+        else:
+          if (isinstance(v,bool)):
+            if v:
+              Scalar.setValue(f"r({k})", 1)
+            else:
+              Scalar.setValue(f"r({k})", 0)
         
 def interviews_delete(guid):
   # // Delete an interview from the server
@@ -684,6 +701,129 @@ def interviews_varcomment(interviewguid, varname, rosteraddress, comment):
     URL=f'{get_server()}/api/v1/interviews/{interviewguid}/comment-by-variable/{varname}?{rosteraddress}comment={requests.utils.quote(comment)}'
     response=servepostdata(URL, None)
         
+
+        
+        
+def assignments_close(assignmentid):
+    response = requests.post(f'{get_server()}/api/v1/assignments/{assignmentid}/close', data={}, auth=get_credentials())
+    print(response.status_code)
+    # // todo: define error handling
+    Macro.setScalar('r(status_code)', str(response.status_code))
+    
+def assignments_getquantitysettings(assignmentid):
+    response = requests.get(f'{get_server()}/api/v1/assignments/{assignmentid}/assignmentQuantitySettings', data={}, auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+    if (response.status_code==200):
+      Scalar.setValue('r(can_change_quantity)',response.json()['CanChangeQuantity'])
+    
+def assignments_archive(assignmentid):
+    response = requests.patch(f'{get_server()}/api/v1/assignments/{assignmentid}/archive', data={}, auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+
+def assignments_unarchive(assignmentid):
+    response = requests.patch(f'{get_server()}/api/v1/assignments/{assignmentid}/unarchive', data={}, auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+    
+def assignments_getaudio(assignmentid):
+    response = requests.get(f'{get_server()}/api/v1/assignments/{assignmentid}/recordAudio', data={}, auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+    if (response.ok):
+      Scalar.setValue('r(record_audio)',response.json()['Enabled'])
+
+def assignments_setaudio(assignmentid, audio):
+    enabled=(audio!=0)
+    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/recordAudio'
+    response = requests.patch(URL, json={'Enabled':enabled}, auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+    
+def assignments_changequantity(assignmentid, num):
+    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/changequantity'
+    response=servepatchdata(URL,str(num))
+    Scalar.setValue('r(status_code)', response.status_code)    
+    
+
+    
+    
+def assignments_history(assignmentid):
+  # returns the history of the assignment in the current data area
+ 
+  headers = {'Content-type': 'application/json'}
+  credentials=get_credentials()
+  
+  URL=f'{get_server()}/api/v1/assignments/{assignmentid}/history'
+  y=requests.get(
+    URL,
+    headers=headers, 
+    data={},
+    auth=credentials)
+  
+  totalcount=y.json()["RecordsFiltered"]
+  print(totalcount, " events in the hostory of assignment ", assignmentid)
+  
+  const_pagesize=30
+  page=0
+  while(const_pagesize*page<totalcount):
+    page=page+1
+    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/history?length={const_pagesize}&start={page}'
+    print("Processing page: ", page)
+    y=requests.get(
+        URL,
+        headers=headers, 
+        data={},
+        auth=credentials)
+    
+    items=y.json()["History"]
+    for h in items:
+        print(h)
+        Data.addObs(1)
+        n=Data.getObsTotal()-1
+        if (h["Action"]!=None):
+          Data.storeAt("action",n,h["Action"])
+        if (h["ActorName"]!=None):
+          Data.storeAt("actor_name",n,h["ActorName"])
+        if (h["UtcDate"]!=None):
+          Data.storeAt("utc_date",n,h["UtcDate"])
+        if (h["AdditionalData"]!=None):
+          Data.storeAt("additional_data",n,str(h["AdditionalData"]))
+   
+def assignments_setresponsible(assignmentid, responsibleLogin):
+    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/assign'
+    response = requests.patch(
+      URL, 
+      json={'Responsible':responsibleLogin}, 
+      auth=get_credentials())
+    Scalar.setValue('r(status_code)', response.status_code)
+   
+def assignments_getdetails(assignmentid):
+    # // Get assignment details
+    URL=f'{get_server()}/api/v1/assignments/{assignmentid}'
+    response=serveget(URL)
+    r=response.json()
+    rsavejson(r)
+    identif=r["IdentifyingData"]
+
+    # // Answers to all question types are stored as strings
+    c=1
+    for x in identif:
+      Macro.setGlobal(f"r(id_guid{c})", x["Identity"])
+      Macro.setGlobal(f"r(id_variable{c})", x["Variable"])
+      Macro.setGlobal(f"r(id_answer{c})", x["Answer"])
+      c=c+1
+    Macro.setGlobal(f"r(id_count)", str(c-1))
+    
+    # // NB: Answers to preloaded questions that are 
+    # // not identifying are not returned !!
+           
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
 end
@@ -711,18 +851,17 @@ program define .new
     
     // Get the server version (not from API)
     tempfile tmp
-    copy `.server' `tmp'
-    local page=fileread(`"`tmp'"')
-    local marker `"<span class="version">"'
-    local vs=strpos(`"`page'"',`"`marker'"')+strlen(`"`marker'"')
-    local page=substr(`"`page'"', `vs', strlen(`"`page'"')-`vs')
-    local ver=substr(`"`page'"',1,strpos(`"`page'"', "</span>")-1)
-    .versionstr="`ver'"
+    copy `"`.server'/.version"' `"`tmp'"'
+    .versionstr=fileread(`"`tmp'"')
+    erase `"`tmp'"'
 
     // display greeting
     display as text "{break}"    
-    display as text `"Survey Solutions API wrapper for Stata version `.wrapperver'"'
-    display as text `"{stata "adoupdate susoapi":Check for updates}"'
+    display as text `"Survey Solutions API wrapper for Stata version `.wrapperver' {stata "adoupdate susoapi":(check for updates)}"'
+    display as result `"Running in "'
+    display as result `"- Stata `c(version)' `c(os)' `c(osdtl)'"'
+    display as result `"- Python "' _continue
+    python : import sys ; print(sys.version)
 
     display as text "{break}"
     display as text `"Survey Solutions data server"'
@@ -742,6 +881,7 @@ program define .new
     display as text "Additional information:"
     display as text `"- Survey Solutions {browse "`.server'/apidocs/":API documentation}"'
     display as text `"- Survey Solutions {browse "https://support.mysurvey.solutions":support site}"'
+    display as text `"- Source code of this application at {browse "https://github.com/radyakin/susoapi":github}"'
     
 end
 
@@ -1209,5 +1349,169 @@ program define .interviews_varcomment
      // Undocumented server response 406 if rosterVector is misspecified
 end
 
+program define .assignments_close
+    // Closes an existing assignment by assignment ID
+    version 16.0
+    args assignmentid
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    python: assignments_close(`assignmentid')
+end
 
+program define .assignments_getquantitysettings
+    // Returns of the quantity of an assignment may be changed
+    version 16.0
+    args assignmentid
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    python: assignments_getquantitysettings(`assignmentid')
+end
+
+program define .assignments_archive
+    // Archives an assignment by assignment ID
+    version 16.0
+    args assignmentid
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    python: assignments_archive(`assignmentid')
+end
+
+program define .assignments_unarchive
+    // Unarchives an assignment by assignment ID
+    version 16.0
+    args assignmentid
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    python: assignments_unarchive(`assignmentid')
+end
+
+program define .assignments_getaudio
+    // Returns returns the status of audio recording of an assignment by assignment ID
+    version 16.0
+    args assignmentid
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    python: assignments_getaudio(`assignmentid')
+end
+
+
+program define .assignments_setaudio
+    // # Returns the status of audio recording of an assignment by assignment ID
+    version 16.0
+    args assignmentid audio
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    if (missing(`"`audio'"')) {
+        display as error "Error! Value (numeric) for audio audit is required. Use 1 for enabled, 0 for disabled."
+        exit 5002
+    }
+    local audio=(`audio'!=0)
+    python: assignments_setaudio(`assignmentid', `audio')
+end
+
+program define .assignments_changequantity
+    // # Tries to set the quantity in an assignment by assignment ID
+    version 16.0
+    args assignmentid num
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    if (missing(`"`num'"')) {
+        display as error "Error! Must specify a new number of interviews in an assignment."
+        exit 5002
+    }
+    
+    python: assignments_changequantity(`assignmentid', `num')
+end
+
+
+
+program define .assignments_history
+    // Returns the history of an assignment in the data area
+    version 16.0
+    args assignmentid frame
+    
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    if !missing(`"`framename'"') {
+      frame create `framename'
+      frame change `framename'
+    }
+    clear
+    
+    generate str32 utc_date        =""
+    generate str32 action          =""
+    generate str32 actor_name      =""
+    generate strL  additional_data =""
+    
+    python: assignments_history("`assignmentid'")
+    compress
+end
+
+program define .assignments_assign
+    // # Assign new responsible for an assignment identified by assignment ID and responsible identified by login name.
+    version 16.0
+    args assignmentid responsiblelogin
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    
+    if (missing(`"`responsiblelogin'"')) {
+        display as error "Error! Responsible person's login name couldn't be specified at the moment."
+        exit 5002
+    }
+
+    python: assignments_setresponsible(`assignmentid', "`responsiblelogin'")
+end
+
+program define .assignments_getdetails
+    // # Returns assignment details
+    version 16.0
+    args assignmentid responsiblelogin
+    if (missing(`"`assignmentid'"')) {
+        display as error "Error! Assignment ID (numeric) is required."
+        exit 5001
+    }
+    python: assignments_getdetails(`assignmentid')
+end
+
+program define .pick_value
+    // Picks one identifying variable value by name from results saved in r()
+    version 16.0
+    args vn
+    
+    local n=r(id_count)
+    local i=1
+    while `i'<=`n' {
+        if (`"`r(id_variable`i')'"'==`"`vn'"') {
+            class exit `"`r(id_answer`i')'"'
+        }
+        local i=`i'+1
+    }
+    class exit ""
+end
 // END OF FILE
