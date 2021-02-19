@@ -1,5 +1,4 @@
 class SuSo {
-  // internal
   
   string wrapperver="1.0"
   
@@ -10,6 +9,8 @@ class SuSo {
   string server
   string username
   string password
+  
+  string workspace
 }
 
 python:
@@ -52,7 +53,10 @@ def checkapi(server,apiname,apipass):
       auth=credentials)
     if (y.status_code!=200):
       return -y.status_code
-    print(y.json()['Message'])
+    if (y.json()['Message']==None):
+      print("The server does not display any global message.")
+    else:
+      print(y.json()['Message'])
   except:
     return -1
   return 0
@@ -607,6 +611,15 @@ def interviews_getpdf(guid):
     with open(saveto, 'wb') as file:
       file.write(response.content)
 
+def users_interviewersall():
+    # // Experimental, get all interviewers
+    # // Works only with HQ credentials
+    URL=f'{get_server()}/primary/UsersApi/AllInterviewers?exportType=excel'
+    response=serveget(URL)
+    saveto=Macro.getLocal("saveto")
+    with open(saveto, 'wb') as file:
+      file.write(response.content)
+
 def interviews_getstats(guid):
     # // Get a transcript of interview in PDF
     URL=f'{get_server()}/api/v1/interviews/{guid}/stats'
@@ -818,7 +831,56 @@ def assignments_getdetails(assignmentid):
         
         
         
+def run_query(URL, query):
+    # //URL="https://demo.mysurvey.solutions/graphql"
+
+    request = requests.post(URL, json={'query': query}, auth=get_credentials())
+    if request.status_code == 200:
+        return request.json()
+    else:
+        raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
+
         
+def maps_getmaps(URL, fm, fu):
+
+    query = """
+    {
+      maps {
+        totalCount  
+        nodes {
+          fileName,
+          importDate,
+          size
+          users{
+            userName
+          }
+        }
+      }
+    }
+    """
+
+    result = run_query(URL, query) # Execute the query
+    #print(result)
+
+    maps=result['data']['maps']
+    #print(maps['totalCount'])
+    SFIToolkit.stata("frame change "+fm)
+    for node in maps['nodes']:
+        Data.addObs(1)
+        n=Data.getObsTotal()-1
+        Data.storeAt("filename", n, node["fileName"])
+        Data.storeAt("importdate", n, node["importDate"])
+        Data.storeAt("size",  n, node["size"])
+        Data.storeAt("users", n, len(node["users"]))
+        
+        if (fu!=""):
+            SFIToolkit.stata("frame change "+fu)
+            for u in node["users"]:
+                Data.addObs(1)
+                n=Data.getObsTotal()-1
+                Data.storeAt("filename", n, node["fileName"])
+                Data.storeAt("username", n, u["userName"])
+            SFIToolkit.stata("frame change "+fm)        
         
         
         
@@ -1069,6 +1131,13 @@ program .users_interviewers
     
     python: users_interviewers("`.server'","`.username'","`.password'","`guid'")
 end
+
+program define .users_interviewersall
+    version 16.0
+    args saveto
+    python: users_interviewersall()
+end
+
 
 program .users_actionslog
     version 16.0
@@ -1514,4 +1583,50 @@ program define .pick_value
     }
     class exit ""
 end
+
+
+program define .maps_getmaps
+    // Get the list of maps and map users
+    args maps users
+    
+    capture frame drop `maps'
+    frame create `maps'
+    frame change `maps'
+    
+    generate filename   = ""
+    generate importdate = ""
+    generate long size  = .
+    generate long users = .
+
+    if !missing(`"`users'"') {
+        frame create `users'
+        frame change `users'
+        generate filename=""
+        generate username=""
+        frame change default
+    }
+    
+    python: maps_getmaps("`.server'/graphql","`maps'","`users'")
+    
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // END OF FILE
