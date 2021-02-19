@@ -543,8 +543,8 @@ def users_actionslog(server, apiname, apipass, guid, datefrom, dateto):
     response=requests.get(URL, headers=headers, data={}, auth=credentials)
     # //totalcount=response.json()["TotalCount"]
     # //print(totalcount, " interviewers in team of supervisor")        
-    print(response)
-    print(response.json())
+    # print(response)
+    # print(response.json())
     for s in response.json():
         Data.addObs(1)
         n=Data.getObsTotal()-1
@@ -836,11 +836,15 @@ def assignments_getdetails(assignmentid):
         
         
 def run_query(URL, query):
-    # //URL="https://demo.mysurvey.solutions/graphql"
-
+    # // For example, URL="https://demo.mysurvey.solutions/graphql"
     request = requests.post(URL, json={'query': query}, auth=get_credentials())
     if request.status_code == 200:
-        return request.json()
+        result=request.json()
+        if ('errors' in result):
+          for e in result['errors']:
+            SFIToolkit.errprintln(e['message'])
+          raise Exception("Query was completed with an error!")
+        return result
     else:
         raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
@@ -922,9 +926,50 @@ def maps_getmaps(URL, fm, fu):
             SFIToolkit.stata("frame change "+fm)        
         
 
+def maps_addusertomap(URL, map, user, workspace):
+    query="""
+      mutation {
+        addUserToMap(
+          fileName: "%s",
+          userName: "%s",
+          workspace: "%s"
+        )
+        {
+          fileName
+        }
+      }""" % (map, user, workspace)
+    result = run_query(URL, query) # Execute the query
+    # // 'Map was not found.'
+    # // 'Map can be assigned only to existing non archived interviewer.'
+    # // 'Provided map already assigned to specified interviewer.'
+
+def maps_deleteuserfrommap(URL, map, user, workspace):
+    query="""
+      mutation {
+        deleteUserFromMap(
+          fileName: "%s",
+          userName: "%s",
+          workspace: "%s"
+        )
+        {
+          fileName
+        }
+      }""" % (map, user, workspace)
+    result = run_query(URL, query) # Execute the query
+
+def maps_deletemap(URL, map, workspace):
+    query="""
+      mutation {
+        deleteMap(
+          fileName: "%s",
+          workspace: "%s"
+        )
+        {
+          fileName
+        }
+      }""" % (map, workspace)
+    result = run_query(URL, query) # Execute the query
 end
-
-
 
 
 
@@ -935,6 +980,7 @@ program define .new
     
     .inittime=`"`c(current_time)'"'
     .initdate=`"`c(current_date)'"'
+    .workspace="primary" // always present and can't be removed
     
     if (`"`inittime'"'!=`"`c(current_time)'"') {
       .inittime=`"`c(current_time)'"'
@@ -1660,6 +1706,7 @@ end
 
 program define .users_reflect
     // Get properties of the current user
+    version 16.0
     python: users_reflect("`.server'/graphql")
     .userroles="`userroles'"
     .userworkspaces="`userworkspaces'"
@@ -1667,17 +1714,36 @@ program define .users_reflect
 end
 
 
+program define .maps_addusertomap
+    // Adds a user to a map
+    version 16.0
+    args map user
+    
+    // local qry=`"mutation {addUserToMap(fileName: "`map'",  userName: "`user'" ){fileName}}"'
+    python: maps_addusertomap("`.server'/graphql","`map'","`user'","`.workspace'")
+    // may result in error messages:
+    //  Provided map already assigned to specified interviewer.
+    //  Map can be assigned only to existing non archived interviewer.
+end
 
 
+program define .maps_deleteuserfrommap
+    // Deletes a user from map
+    version 16.0
+    args map user
+    
+    python: maps_deleteuserfrommap("`.server'/graphql","`map'","`user'","`.workspace'")
+end
 
 
-
-
-
-
-
-
-
+program define .maps_deletemap
+    // Deletes a map from the server
+    version 16.0
+    args map 
+    
+    python: maps_deletemap("`.server'/graphql","`map'","`.workspace'")
+    // No error is displayed if there is no such map
+end
 
 
 
