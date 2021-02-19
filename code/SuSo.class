@@ -11,6 +11,10 @@ class SuSo {
   string password
   
   string workspace
+  
+  string userid     // GUID, no dashes.
+  string userroles  // if empty - APIUSER is implied, space delimited if multiple. 
+  string userworkspaces // space delimited, may be empty.
 }
 
 python:
@@ -840,7 +844,27 @@ def run_query(URL, query):
     else:
         raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
-        
+
+def users_reflect(URL):
+
+    query = """
+      query viewer {
+        viewer {
+          id,
+          roles,
+          workspaces
+        }
+      }
+    """
+
+    result = run_query(URL, query) # Execute the query
+    Macro.setLocal("userid",result['data']['viewer']['id'])
+    roles=' '.join(map(str, result['data']['viewer']['roles']))
+    if roles=="":
+      roles="APIUSER"
+    Macro.setLocal("userroles",roles)
+    Macro.setLocal("userworkspaces",' '.join(map(str, result['data']['viewer']['workspaces'])))
+
 def maps_getmaps(URL, fm, fu):
 
     query = """
@@ -850,7 +874,14 @@ def maps_getmaps(URL, fm, fu):
         nodes {
           fileName,
           importDate,
-          size
+          size,
+          xMaxVal,
+          yMaxVal,
+          xMinVal,
+          yMinVal,
+          wkid,
+          maxScale,
+          minScale,
           users{
             userName
           }
@@ -873,6 +904,14 @@ def maps_getmaps(URL, fm, fu):
         Data.storeAt("size",  n, node["size"])
         Data.storeAt("users", n, len(node["users"]))
         
+        Data.storeAt("xminval", n, node["xMinVal"])
+        Data.storeAt("xmaxval", n, node["xMaxVal"])
+        Data.storeAt("yminval", n, node["yMinVal"])
+        Data.storeAt("ymaxval", n, node["yMaxVal"])
+        Data.storeAt("minscale", n, node["minScale"])
+        Data.storeAt("maxscale", n, node["maxScale"])
+        Data.storeAt("wkid", n, node["wkid"])
+        
         if (fu!=""):
             SFIToolkit.stata("frame change "+fu)
             for u in node["users"]:
@@ -882,12 +921,7 @@ def maps_getmaps(URL, fm, fu):
                 Data.storeAt("username", n, u["userName"])
             SFIToolkit.stata("frame change "+fm)        
         
-        
-        
-        
-        
-        
-        
+
 end
 
 
@@ -933,6 +967,13 @@ program define .new
     // Now check the server for responding
     python: Macro.setLocal("c",str(check("`.server'", "`.username'", "`.password'")))
     if (`c' < 0) exit 3333
+    
+    // Now display the user identity
+    .users_reflect
+    display as text "User `.username':"
+    display as text "- identity: " as result "`.userid'"
+    display as text "- role: " as result "`.userroles'"
+    display as text "- access to workspaces: " as result "`.userworkspaces'"
     
     display as text "{break}"
     display as text "Here are just some things you could do:"
@@ -1597,6 +1638,14 @@ program define .maps_getmaps
     generate importdate = ""
     generate long size  = .
     generate long users = .
+    
+    generate long wkid=.
+    generate double minscale=.
+    generate double maxscale=.
+    generate double xminval=.
+    generate double xmaxval=.
+    generate double yminval=.
+    generate double ymaxval=.
 
     if !missing(`"`users'"') {
         frame create `users'
@@ -1607,11 +1656,15 @@ program define .maps_getmaps
     }
     
     python: maps_getmaps("`.server'/graphql","`maps'","`users'")
-    
 end
 
-
-
+program define .users_reflect
+    // Get properties of the current user
+    python: users_reflect("`.server'/graphql")
+    .userroles="`userroles'"
+    .userworkspaces="`userworkspaces'"
+    .userid="`userid'"
+end
 
 
 
