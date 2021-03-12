@@ -10,11 +10,13 @@ class SuSo {
   string username
   string password
   
-  string workspace
+  string workspace  // workspace for API query
   
   string userid     // GUID, no dashes.
   string userroles  // if empty - APIUSER is implied, space delimited if multiple. 
-  string userworkspaces // space delimited, may be empty.
+  string userworkspaces // space delimited list of workspaces to which the user has access, may be empty.
+  
+  string verbose="false"
 }
 
 python:
@@ -23,38 +25,38 @@ import time
 import requests
 from sfi import Macro, Data, Scalar, SFIToolkit
 
+ajheader={'Content-type': 'application/json'}
+ajpheader={'Content-type': 'application/json-patch+json'}
 
 def checkurl(url):
   try:
     r = requests.get(url)
   except requests.ConnectionError as e:
-    # Handle exception here
+    # // Handle exception here
     Macro.setLocal("downloaded",str(-631))
     return -631
   return 0
 
-def checkserver(server):
+def checkserver():
+
   try:
-    r = requests.get(server + "/.hc")
+    r = requests.get(get_server_url() + "/.hc")
     if (r.status_code==404):
       Macro.setLocal("downloaded",str(-10404))
       return -10404
   except requests.ConnectionError as e:
-    # Handle exception here
+    # // Handle exception here
     Macro.setLocal("downloaded",str(-631))
     return -631
   return 0
   
-def checkapi(server,apiname,apipass):
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  print(server)
+def checkapi():
   try:
     y=requests.get(
-      server+"/api/v1/settings/globalnotice/",
-      headers=headers, 
+      f"{get_server_url()}/api/v1/settings/globalnotice/",
+      headers=ajheader, 
       data={},
-      auth=credentials)
+      auth=get_credentials())
     if (y.status_code!=200):
       return -y.status_code
     if (y.json()['Message']==None):
@@ -65,16 +67,16 @@ def checkapi(server,apiname,apipass):
     return -1
   return 0
   
-def check(server, apiname, apipass):
-  c=checkurl(server)
+def check():
+  c=checkurl(get_server_url())
   if (c < 0):
     return -1
   
-  c=checkserver(server)
+  c=checkserver()
   if (c < 0):
     return -1
   
-  c=checkapi(server,apiname,apipass)
+  c=checkapi()
   if (c < 0):
     if (c==-401):
       SFIToolkit.errprint("Server responded: 401 Unauthorized.")
@@ -85,17 +87,27 @@ def check(server, apiname, apipass):
   print("Server OK")
   return 0
 
+def read_property(s):
+    return SFIToolkit.macroExpand(f"`=char(96)'.{s}`=char(39)'")
+  
 def get_server():
-    return SFIToolkit.macroExpand("`=char(96)'.server`=char(39)'")
+    return read_property("server")
+    
+def get_workspace():
+    return read_property("workspace")
+  
+def get_server_url():
+    return f"{get_server()}/{get_workspace()}" 
 
 def get_credentials():
-    username=SFIToolkit.macroExpand("`=char(96)'.username`=char(39)'")
-    password=SFIToolkit.macroExpand("`=char(96)'.password`=char(39)'")
-    return (username,password)  
+    return (read_property("username"), read_property("password"))  
 
-def export(server,apiname,apipass):
-  # returns number of bytes in the saved file or a negative code if failed
-  c=check(server, apiname, apipass)
+def export():
+  # // Returns number of bytes in the saved file 
+  # // or a negative code if failed
+  
+  server=get_server_url()
+  c=check()
   if (c < 0):
     Macro.setLocal("downloaded",str(c))
     return
@@ -106,66 +118,71 @@ def export(server,apiname,apipass):
   qry=Macro.getLocal("qry")
   saveto=Macro.getLocal("saveto")
   URL=server+'/api/v2/export/'
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
 
   x = requests.post(
     URL,
     data=qry,
-    headers=headers,
-    auth=credentials)
+    headers=ajheader,
+    auth=get_credentials())
   
   if (x.ok):
     code=x.status_code
     jobid=x.json()['JobId']
-    print('Set up new export job with ID:', jobid)
+    if (read_property("verbose")=="true"):
+      print('Set up new export job with ID:', jobid)
     y=requests.get(
       URL+str(jobid),
-      headers=headers, 
+      headers=ajheader, 
       data={},
-      auth=credentials)
+      auth=get_credentials())
     if (y.ok):
       c=1
       exportStatus=y.json()['ExportStatus']
       while((exportStatus!='Completed') and (c<const_maxcycles)):
         c=c+1
-        print(exportStatus, y.json()['Progress'],"%")
+        if (read_property("verbose")=="true"):
+          print(exportStatus, y.json()['Progress'],"%")
         time.sleep(const_delay)
         y=requests.get(
           URL+str(jobid),
-          headers=headers, 
+          headers=ajheaders, 
           data={},
-          auth=credentials)
+          auth=get_credentials())
         exportStatus=y.json()['ExportStatus']
     else:
-      print("Something went wrong! Could not initiate a new data export job.")
+      SFIToolkit.errprintln("Something went wrong! Could not initiate a new data export job.")
       Macro.setLocal("downloaded",str(-1))
       return
 
-    print(exportStatus, y.json()['Progress'],"%")
+    if (read_property("verbose")=="true"):
+      print(exportStatus, y.json()['Progress'],"%")
     if (not y.json()['HasExportFile']):
-      print("Something went wrong! The data export job has been completed, but the export file was not produced by the server.")
+      SFIToolkit.errprintln("Something went wrong! The data export job has been completed, but the export file was not produced by the server.")
       Macro.setLocal("downloaded",str(-1))
       return
 
     links=y.json()['Links']
     file=links['Download']
 
-    # // temporary fix until the problem with download not ready is solved
-    print("Downloading: "+file)
+    # // temporary fix until the problem with 'download not ready' is solved
+    # // temporary fix is retained to be suitable for not updated versions
+    if (read_property("verbose")=="true"):
+      print("Downloading: "+file)
     c=1
     s=400
     while((s!=200) and (c<const_maxcycles)):
-      filedata = requests.get(file, auth=credentials, allow_redirects=True)
+      filedata = requests.get(file, auth=get_credentials(), allow_redirects=True)
       s=filedata.status_code
-      print(c," ",s)
+      if (read_property("verbose")=="true"):
+        print(c," ",s)
       c=c+1
 
     with open(saveto, 'wb') as file:
       file.write(filedata.content)
     Macro.setLocal("downloaded",str(len(filedata.content)))
   else:
-    print(x.status_code)
+    if (read_property("verbose")=="true"):
+      print(x.status_code)
     if (x.status_code==401):
       SFIToolkit.errprint("Server responded: 401 Unauthorized.")
       SFIToolkit.errprintln("Please check that the API user name and password are valid for this server.")
@@ -178,53 +195,43 @@ def export(server,apiname,apipass):
       return
     Macro.setLocal("downloaded",str(-1))
 
-def qx_doc(server, apiname, apipass, qguid, qversion):
+def qx_doc(qguid, qversion):
   # // Returns the questionnaire document
   # // This is currently a JSON-formatted text document
- 
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
   
-  URL=server+'/api/v1/questionnaires/'+qguid+"/"+str(qversion)+'/document'
+  URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/document"
   filedata=requests.get(
     URL,
-    headers=headers, 
+    headers=ajheader, 
     data={},
-    auth=credentials)
-  print(filedata)
+    auth=get_credentials())
+  if (read_property("verbose")=="true"):
+    print(filedata)
   saveto=Macro.getLocal("saveto")
   with open(saveto, 'wb') as file:
     file.write(filedata.content)
     
-def qx_list(server, apiname, apipass):
+def qx_list():
   # returns the list of questionnaires in the current data area
   # in this query 'offset' is in fact a 'page number'
- 
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
   
-  URL=server+'/api/v1/questionnaires/'
-  y=requests.get(
-    URL,
-    headers=headers, 
-    data={},
-    auth=credentials)
+  URL=f"{get_server_url()}/api/v1/questionnaires/"
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   
   totalcount=y.json()["TotalCount"]
-  print(totalcount, " questionnaires on the server")
+  if (read_property("verbose")=="true"):
+    print(totalcount, " questionnaires on the server")
   
   const_pagesize=40
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=server + '/api/v1/questionnaires/?limit=' +str(const_pagesize)+'&offset=' + str(page)
-    print("Processing page: ", page)
-    y=requests.get(
-        URL,
-        headers=headers, 
-        data={},
-        auth=credentials)
-    # // print(y.status_code)   // need error processing here
+    URL=f"{get_server_url()}/api/v1/questionnaires/?limit={str(const_pagesize)}&offset={str(page)}"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(y.status_code)   # // need error processing here
 
     qxs=y.json()["Questionnaires"]
     for q in qxs:
@@ -237,34 +244,25 @@ def qx_list(server, apiname, apipass):
         Data.storeAt("qx_var",n,q["Variable"])
         Data.storeAt("qx_lastentry",n,q["LastEntryDate"])
 
-def qx_interviews(server, apiname, apipass, qguid, qversion):
+def qx_interviews(qguid, qversion):
   # // Returns the list of questionnaires in the current data area
   # // In this query 'offset' is in fact a 'page number'
- 
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
   
-  URL=server+'/api/v1/questionnaires/'+qguid+"/"+str(qversion)+"/interviews"
-  y=requests.get(
-    URL,
-    headers=headers, 
-    data={},
-    auth=credentials)
+  URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/interviews"
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   
   totalcount=y.json()["TotalCount"]
-  print(totalcount, " interviews of this questionnaire on the server")
+  if (read_property("verbose")=="true"):
+    print(totalcount, " interviews of this questionnaire on the server")
 
   const_pagesize=40
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=server+'/api/v1/questionnaires/'+qguid+"/"+str(qversion)+'/interviews?limit=' +str(const_pagesize)+'&offset=' + str(page)
-    print("Processing page: ", page)
-    y=requests.get(
-        URL,
-        headers=headers, 
-        data={},
-        auth=credentials)
+    URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/interviews?limit={str(const_pagesize)}&offset={str(page)}"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
 
     qxs=y.json()["Interviews"]
     for iview in qxs:
@@ -283,55 +281,45 @@ def qx_interviews(server, apiname, apipass, qguid, qversion):
         if (iview["ReceivedByDeviceAtUtc"]!=None):
           Data.storeAt("received_by_device_at_utc", n, iview["ReceivedByDeviceAtUtc"])
 
-def notice_set(server, apiname, apipass, message):
+def notice_set(message):
   # // Sets global notice on the server
   content={"Message": message}
-  headers = {'Content-type': 'application/json-patch+json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/settings/globalnotice'
+
+  URL=f"{get_server_url()}/api/v1/settings/globalnotice"
   response=requests.put(
     URL, 
-    headers=headers, 
+    headers=ajpheader, 
     json=content,
-    auth=credentials)
+    auth=get_credentials())
 
-def notice_get(server, apiname, apipass):
+def notice_get():
   # // Retrieves global notice from the server
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/settings/globalnotice'
-  response=requests.get(
-    URL,
-    headers=headers, 
-    data={},
-    auth=credentials)
-    
+  URL=f"{get_server_url()}/api/v1/settings/globalnotice"
+  response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials()) 
   Macro.setLocal("message",response.json()["Message"])
   
-def notice_delete(server, apiname, apipass):
+def notice_delete():
   # // Delete global notice on the server
-  headers = {'Content-type': 'application/json-patch+json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/settings/globalnotice'
-  response=requests.delete(URL, headers=headers, auth=credentials)
+  URL=get_server_url()+'/api/v1/settings/globalnotice'
+  response=requests.delete(URL, headers=ajpheader, auth=get_credentials())
 
-def users_supervisors(server, apiname, apipass) :
+def users_supervisors() :
   # // Get the list of supervisors
-  
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/supervisors'
-  response=requests.get(URL, headers=headers, data={}, auth=credentials)
+  credentials=get_credentials()
+  URL=get_server_url()+'/api/v1/supervisors'
+  response=requests.get(URL, headers=ajheader, data={}, auth=credentials)
   totalcount=response.json()["TotalCount"]
-  print(totalcount, " supervisors on the server")
+  if (read_property("verbose")=="true"):
+    print(totalcount, " supervisors on the server")
 
   const_pagesize=40
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=server + '/api/v1/supervisors/?limit=' +str(const_pagesize)+'&offset=' + str(page)
-    print("Processing page: ", page)
-    response=requests.get(URL, headers=headers, data={}, auth=credentials)
+    URL=f"{get_server_url()}/api/v1/supervisors/?limit={str(const_pagesize)}&offset={str(page)}"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    response=requests.get(URL, headers=ajheader, data={}, auth=credentials)
     for s in response.json()["Users"]:
         Data.addObs(1)
         n=Data.getObsTotal()-1
@@ -340,14 +328,10 @@ def users_supervisors(server, apiname, apipass) :
         Data.storeAt("creation_date",n,s["CreationDate"])
         Data.storeAt("is_locked",    n,s["IsLocked"])
 
-        
-def users_supervisor(server, apiname, apipass, guid) :
+def users_supervisor(guid) :
   # // Get details for a supervisor
-  
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/supervisors/'+guid
-  response=requests.get(URL, headers=headers, data={}, auth=credentials)
+  URL=f"{get_server_url()}/api/v1/supervisors/{guid}"
+  response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   r=response.json()
   
   Macro.setGlobal("r(UserName)", r["UserName"])
@@ -366,13 +350,11 @@ def users_supervisor(server, apiname, apipass, guid) :
   Scalar.setValue("r(IsArchived)", a)
   Scalar.setValue("r(IsLocked)", l)
 
-def users_interviewer(server, apiname, apipass, guid) :
+def users_interviewer(guid) :
   # // Get details for an interviewer
   
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/interviewers/'+guid
-  response=requests.get(URL, headers=headers, data={}, auth=credentials)
+  URL=f"{get_server_url()}/api/v1/interviewers/{guid}"
+  response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   r=response.json()
   
   Macro.setGlobal("r(UserName)"    , r["UserName"])
@@ -411,13 +393,10 @@ def users_interviewer(server, apiname, apipass, guid) :
   Scalar.setValue("r(IsLockedBySupervisor)", ls)
   Scalar.setValue("r(IsLockedByHeadquarters)", lh)
   
-def users_user(server, apiname, apipass, guid) :
+def users_user(guid) :
   # // Get details for a user
-  
-  headers = {'Content-type': 'application/json'}
-  credentials=(apiname,apipass)
-  URL=server+'/api/v1/users/'+guid
-  response=requests.get(URL, headers=headers, data={}, auth=credentials)
+  URL=f"{get_server_url()}/api/v1/users/{guid}"
+  response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   r=response.json()
   
   Macro.setGlobal("r(UserName)"    , r["UserName"])
@@ -447,22 +426,11 @@ def users_user(server, apiname, apipass, guid) :
   Scalar.setValue("r(IsArchived)", a)
   Scalar.setValue("r(IsLocked)", l)
 
-def users_create(server, apiname, apipass):
+def users_create():
   # // Creates a new user on the server
     qry=Macro.getLocal("qry")
-    print(qry)
-
-    headers = {'Content-type': 'application/json'}
-    credentials=(apiname,apipass)
-    URL=server+'/api/v1/users/'
-    response=requests.post(
-      URL, 
-      headers=headers, 
-      data=qry,
-      auth=credentials)
-    print(response)
-    print(response.status_code)
-    print(response.text)
+    URL=f"{get_server_url()}/api/v1/users/"
+    response=requests.post(URL, headers=ajheader, data=qry, auth=get_credentials())
     r=response.json()
     
     # // normal response=200 and new user ID is returned in the response
@@ -477,46 +445,32 @@ def users_create(server, apiname, apipass):
       for e in r["Errors"]:
         Macro.setGlobal("r(Error"+str(i)+ ")", e)
 
-def users_archive(server, apiname, apipass, guid):
+def users_archive(guid):
     # // Archives a user on the server
-    headers = {'Content-type': 'application/json'}
-    credentials=(apiname,apipass)
-    URL=server+'/api/v1/users/'+guid+'/archive'
-    response=requests.patch(
-      URL, 
-      headers=headers, 
-      data={},
-      auth=credentials)
-    
+    URL=f"{get_server_url()}/api/v1/users/{guid}/archive"
+    response=requests.patch(URL, headers=ajheader, data={}, auth=get_credentials())
 
-def users_unarchive(server, apiname, apipass, guid):
+def users_unarchive(guid):
     # // Unarchives a user on the server
-    headers = {'Content-type': 'application/json'}
-    credentials=(apiname,apipass)
-    URL=server+'/api/v1/users/'+guid+'/unarchive'
-    response=requests.patch(
-      URL, 
-      headers=headers, 
-      data={},
-      auth=credentials)
-    
-def users_interviewers(server, apiname, apipass, guid):
+    URL=f"{get_server_url()}/api/v1/users/{guid}/unarchive"
+    response=requests.patch(URL, headers=ajheader, data={}, auth=get_credentials())
+
+def users_interviewers(guid):
     # // Returns the list of interviewers in the team of a supervisor
-    
-    headers = {'Content-type': 'application/json'}
-    credentials=(apiname,apipass)
-    URL=server+'/api/v1/supervisors/'+guid+'/interviewers'
-    response=requests.get(URL, headers=headers, data={}, auth=credentials)
+    URL=f"{get_server_url()}/api/v1/supervisors/{guid}/interviewers"
+    response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
     totalcount=response.json()["TotalCount"]
-    print(totalcount, " interviewers in team of supervisor")
-  
+    if (read_property("verbose")=="true"):
+      print(totalcount, " interviewers in team of supervisor")
+
     const_pagesize=10
     page=0
     while(const_pagesize*page<totalcount):
       page=page+1
-      URL=server + '/api/v1/supervisors/'+guid+'/interviewers?limit=' +str(const_pagesize)+'&offset=' + str(page)
-      print("Processing page: ", page)
-      response=requests.get(URL, headers=headers, data={}, auth=credentials)
+      URL=f"{get_server_url()}/api/v1/supervisors/'+guid+'/interviewers?limit={str(const_pagesize)}&offset={str(page)}"
+      if (read_property("verbose")=="true"):
+        print("Processing page: ", page)
+      response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
       for s in response.json()["Users"]:
         Data.addObs(1)
         n=Data.getObsTotal()-1
@@ -525,26 +479,18 @@ def users_interviewers(server, apiname, apipass, guid):
         Data.storeAt("creation_date",n,s["CreationDate"])
         Data.storeAt("is_locked",    n,s["IsLocked"])
 
-        
-        
-def users_actionslog(server, apiname, apipass, guid, datefrom, dateto):
+def users_actionslog(guid, datefrom, dateto):
     # // Returns the actions log of a particular interviewer
-    # //from to!!!
-    headers = {'Content-type': 'application/json'}
-    credentials=(apiname,apipass)
-    
-    f=""
+    # // Options -from- and -to- are expected in the same format as the server wants them.
+
+    period=""
     if (datefrom!=""):
-      f="start="+datefrom+"&end="+dateto
+      period=f"start={datefrom}&end={dateto}"
     
-    URL=server+'/api/v1/interviewers/'+guid+'/actions-log?'+f
-    
-    print(URL)
-    response=requests.get(URL, headers=headers, data={}, auth=credentials)
-    # //totalcount=response.json()["TotalCount"]
-    # //print(totalcount, " interviewers in team of supervisor")        
-    # print(response)
-    # print(response.json())
+    URL=f"{get_server_url()}/api/v1/interviewers/'+guid+'/actions-log?{period}"
+
+    response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+
     for s in response.json():
         Data.addObs(1)
         n=Data.getObsTotal()-1
@@ -552,64 +498,68 @@ def users_actionslog(server, apiname, apipass, guid, datefrom, dateto):
         Data.storeAt("message", n,s["Message"])
 
 def servepatch(URL):
-    # // Serves a PATCH request
-    headers = {'Content-type': 'application/json'}
-    response=requests.patch(URL,headers=headers,data={},auth=get_credentials())
-    print(response.status_code)
+    # // Serves a PATCH request using an "application/json" header
+    response=requests.patch(URL,headers=ajheader,data={},auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(response.status_code)
     return response
+    
 def servepatchdata(URL, content):
     # // Serves a PATCH request with data
-    headers = {'Content-type': 'application/json-patch+json'}
-    response=requests.patch(URL,headers=headers,json=content,auth=get_credentials())
-    print(response.status_code)
+    response=requests.patch(URL,headers=ajpheader,json=content,auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(response.status_code)
     return response
+
 def servepostdata(URL, content):
     # // Serves a POST request with data
-    headers = {'Content-type': 'application/json-patch+json'}
-    response=requests.post(URL,headers=headers,json=content,auth=get_credentials())
-    print(response.status_code)
+    response=requests.post(URL,headers=ajpheader,json=content,auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(response.status_code)
     return response
+
 def serveget(URL):
     # // Serves a GET request
-    headers = {'Content-type': 'application/json'}
-    response=requests.get(URL,headers=headers,data={},auth=get_credentials())
-    print(response.status_code)
+    response=requests.get(URL,headers=ajheader,data={},auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(response.status_code)
     return response
+
 def servedelete(URL):
     # // Serves a DELETE request
-    headers = {'Content-type': 'application/json'}
-    response=requests.delete(URL,headers=headers,data={},auth=get_credentials())
-    print(response.status_code)
+    response=requests.delete(URL,headers=ajheader,data={},auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(response.status_code)
     return response
 
 def interviews_approve(guid, comment):
     # // Approves interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}/approve?comment={requests.utils.quote(comment)}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/approve?comment={requests.utils.quote(comment)}"
     response=servepatch(URL)
 
 def interviews_reject(guid, comment, responsibleguid):
     # // Rejects interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}/reject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/reject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}"
     response=servepatch(URL)
 
 def interviews_hqunapprove(guid, comment):
     # // HQ-recalls interview from approved status
-    URL=f'{get_server()}/api/v1/interviews/{guid}/hqunapprove?comment={requests.utils.quote(comment)}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/hqunapprove?comment={requests.utils.quote(comment)}"
     response=servepatch(URL)
 
 def interviews_approve(guid, comment):
     # // HQ-approves interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}/hqapprove?comment={requests.utils.quote(comment)}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/hqapprove?comment={requests.utils.quote(comment)}"
     response=servepatch(URL)
     
 def interviews_hqreject(guid, comment, responsibleguid):
     # // HQ-rejects interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}/hqreject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/hqreject?comment={requests.utils.quote(comment)}&responsibleId={responsibleguid}"
     response=servepatch(URL)
 
 def interviews_getpdf(guid):
     # // Get a transcript of interview in PDF
-    URL=f'{get_server()}/api/v1/interviews/{guid}/pdf'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/pdf"
     response=serveget(URL)
     saveto=Macro.getLocal("saveto")
     with open(saveto, 'wb') as file:
@@ -618,21 +568,23 @@ def interviews_getpdf(guid):
 def users_interviewersall():
     # // Experimental, get all interviewers
     # // Works only with HQ credentials
-    URL=f'{get_server()}/primary/UsersApi/AllInterviewers?exportType=excel'
+    # // TODO: use workspace from the properties
+    workspace=Macro.getLocal("workspace")
+    URL=f"{get_server_url()}/{workspace}/UsersApi/AllInterviewers?exportType=excel"
     response=serveget(URL)
     saveto=Macro.getLocal("saveto")
     with open(saveto, 'wb') as file:
       file.write(response.content)
 
 def interviews_getstats(guid):
-    # // Get a transcript of interview in PDF
-    URL=f'{get_server()}/api/v1/interviews/{guid}/stats'
+    # // Get statistics of interview
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/stats"
     response=serveget(URL)
     rsavejson(response.json())
     
 def interviews_gethistory(guid):
     # // Get history of interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}/history'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}/history"
     response=serveget(URL)
     for a in response.json()["Records"]:
       Data.addObs(1)
@@ -652,7 +604,7 @@ def interviews_gethistory(guid):
         
 def interviews_getanswers(guid):
     # // Get answers of interview
-    URL=f'{get_server()}/api/v1/interviews/{guid}'
+    URL=f"{get_server_url()}/api/v1/interviews/{guid}"
     response=serveget(URL)
     for a in response.json()["Answers"]:
       Data.addObs(1)
@@ -672,126 +624,121 @@ def interviews_getanswers(guid):
 
 def rsavejson(jsonobj):
     # // Saves JSON object to r()-results
+    rsavejsonpfix(jsonobj,"")
+
+def rsavejsonpfix(jsonobj,pfix):
+    # // Saves JSON object to r()-results with prefix (unsafe)
+    if (pfix!=""):
+      pfix=pfix+"_"
     for (k, v) in jsonobj.items ():
-      # print(k)
-      # print(v)
       if (isinstance(v,str)):
-        Macro.setGlobal(f"r({k})", v)
+        Macro.setGlobal(f"r({pfix}{k})", v)
       else:
         if (isinstance(v, numbers.Number)):
-          Scalar.setValue(f"r({k})", v)
+          Scalar.setValue(f"r({pfix}{k})", v)
         else:
           if (isinstance(v,bool)):
             if v:
-              Scalar.setValue(f"r({k})", 1)
+              Scalar.setValue(f"r({pfix}{k})", 1)
             else:
-              Scalar.setValue(f"r({k})", 0)
+              Scalar.setValue(f"r({pfix}{k})", 0)
         
 def interviews_delete(guid):
   # // Delete an interview from the server
-  headers = {'Content-type': 'application/json-patch+json'}
-  URL=get_server()+"/api/v1/interviews/"+guid
-  response=requests.delete(URL, headers=headers, auth=get_credentials())
-  print(response.status_code)
+  URL=f"{get_server_url()}/api/v1/interviews/{guid}"
+  response=requests.delete(URL, headers=ajpheader, auth=get_credentials())
+  if (read_property("verbose")=="true"):
+    print(response.status_code)
   
   # // 406 for completed interviews ???
   
 def interviews_assign(intguid, responsibleguid):
     # // Assigns interview to interviewer
-    URL=f'{get_server()}/api/v1/interviews/{intguid}/assign'
+    URL=f"{get_server_url()}/api/v1/interviews/{intguid}/assign"
     data={"ResponsibleId":responsibleguid}
     response=servepatchdata(URL,data)  
 
 def interviews_assignsupervisor(intguid, responsibleguid):
     # // Assigns interview to supervisor
-    URL=f'{get_server()}/api/v1/interviews/{intguid}/assignsupervisor'
+    URL=f"{get_server_url()}/api/v1/interviews/{intguid}/assignsupervisor"
     data={"ResponsibleId":responsibleguid}
     response=servepatchdata(URL,data)  
 
 def interviews_comment(interviewguid, questionguid, comment):
     # // Add comment to question in interview
-    URL=f'{get_server()}/api/v1/interviews/{interviewguid}/comment/{questionguid}?comment={requests.utils.quote(comment)}'
+    URL=f"{get_server_url()}/api/v1/interviews/{interviewguid}/comment/{questionguid}?comment={requests.utils.quote(comment)}"
     response=servepostdata(URL, None)
 
 def interviews_varcomment(interviewguid, varname, rosteraddress, comment):
     # // Add comment to question in interview
-    URL=f'{get_server()}/api/v1/interviews/{interviewguid}/comment-by-variable/{varname}?{rosteraddress}comment={requests.utils.quote(comment)}'
+    URL=f"{get_server_url()}/api/v1/interviews/{interviewguid}/comment-by-variable/{varname}?{rosteraddress}comment={requests.utils.quote(comment)}"
     response=servepostdata(URL, None)
         
 
         
         
 def assignments_close(assignmentid):
-    response = requests.post(f'{get_server()}/api/v1/assignments/{assignmentid}/close', data={}, auth=get_credentials())
-    print(response.status_code)
+    response = requests.post(f'{get_server_url()}/api/v1/assignments/{assignmentid}/close', data={}, auth=get_credentials())
+    if (read_property("verbose")=="true"): 
+      print(response.status_code)
     # // todo: define error handling
     Macro.setScalar('r(status_code)', str(response.status_code))
     
 def assignments_getquantitysettings(assignmentid):
-    response = requests.get(f'{get_server()}/api/v1/assignments/{assignmentid}/assignmentQuantitySettings', data={}, auth=get_credentials())
+    response = requests.get(f'{get_server_url()}/api/v1/assignments/{assignmentid}/assignmentQuantitySettings', data={}, auth=get_credentials())
     Scalar.setValue('r(status_code)', response.status_code)
     if (response.status_code==200):
       Scalar.setValue('r(can_change_quantity)',response.json()['CanChangeQuantity'])
     
 def assignments_archive(assignmentid):
-    response = requests.patch(f'{get_server()}/api/v1/assignments/{assignmentid}/archive', data={}, auth=get_credentials())
-    Scalar.setValue('r(status_code)', response.status_code)
+    response = requests.patch(f"{get_server_url()}/api/v1/assignments/{assignmentid}/archive", data={}, auth=get_credentials())
+    Scalar.setValue("r(status_code)", response.status_code)
 
 def assignments_unarchive(assignmentid):
-    response = requests.patch(f'{get_server()}/api/v1/assignments/{assignmentid}/unarchive', data={}, auth=get_credentials())
-    Scalar.setValue('r(status_code)', response.status_code)
+    response = requests.patch(f"{get_server_url()}/api/v1/assignments/{assignmentid}/unarchive", data={}, auth=get_credentials())
+    Scalar.setValue("r(status_code)", response.status_code)
     
 def assignments_getaudio(assignmentid):
-    response = requests.get(f'{get_server()}/api/v1/assignments/{assignmentid}/recordAudio', data={}, auth=get_credentials())
-    Scalar.setValue('r(status_code)', response.status_code)
+    response = requests.get(f"{get_server_url()}/api/v1/assignments/{assignmentid}/recordAudio", data={}, auth=get_credentials())
+    Scalar.setValue("r(status_code)", response.status_code)
     if (response.ok):
-      Scalar.setValue('r(record_audio)',response.json()['Enabled'])
+      Scalar.setValue("r(record_audio)",response.json()['Enabled'])
 
 def assignments_setaudio(assignmentid, audio):
     enabled=(audio!=0)
-    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/recordAudio'
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/recordAudio"
     response = requests.patch(URL, json={'Enabled':enabled}, auth=get_credentials())
-    Scalar.setValue('r(status_code)', response.status_code)
+    Scalar.setValue("r(status_code)", response.status_code)
     
 def assignments_changequantity(assignmentid, num):
-    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/changequantity'
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/changequantity"
     response=servepatchdata(URL,str(num))
     Scalar.setValue('r(status_code)', response.status_code)    
-    
 
-    
-    
+
 def assignments_history(assignmentid):
-  # returns the history of the assignment in the current data area
- 
-  headers = {'Content-type': 'application/json'}
-  credentials=get_credentials()
-  
-  URL=f'{get_server()}/api/v1/assignments/{assignmentid}/history'
-  y=requests.get(
-    URL,
-    headers=headers, 
-    data={},
-    auth=credentials)
+  # // Returns the history of the assignment in the current data area
+
+  URL=f'{get_server_url()}/api/v1/assignments/{assignmentid}/history'
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   
   totalcount=y.json()["RecordsFiltered"]
-  print(totalcount, " events in the hostory of assignment ", assignmentid)
+  if (read_property("verbose")=="true"):
+    print(totalcount, " events in the history of assignment ", assignmentid)
   
   const_pagesize=30
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/history?length={const_pagesize}&start={page}'
-    print("Processing page: ", page)
-    y=requests.get(
-        URL,
-        headers=headers, 
-        data={},
-        auth=credentials)
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/history?length={const_pagesize}&start={page}"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
     
     items=y.json()["History"]
     for h in items:
-        print(h)
+        if (read_property("verbose")=="true"):
+          print(h)
         Data.addObs(1)
         n=Data.getObsTotal()-1
         if (h["Action"]!=None):
@@ -804,16 +751,16 @@ def assignments_history(assignmentid):
           Data.storeAt("additional_data",n,str(h["AdditionalData"]))
    
 def assignments_setresponsible(assignmentid, responsibleLogin):
-    URL=f'{get_server()}/api/v1/assignments/{assignmentid}/assign'
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/assign"
     response = requests.patch(
       URL, 
       json={'Responsible':responsibleLogin}, 
       auth=get_credentials())
-    Scalar.setValue('r(status_code)', response.status_code)
+    Scalar.setValue("r(status_code)", response.status_code)
    
 def assignments_getdetails(assignmentid):
     # // Get assignment details
-    URL=f'{get_server()}/api/v1/assignments/{assignmentid}'
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}"
     response=serveget(URL)
     r=response.json()
     rsavejson(r)
@@ -830,19 +777,24 @@ def assignments_getdetails(assignmentid):
     
     # // NB: Answers to preloaded questions that are 
     # // not identifying are not returned !!
-           
-        
-        
-        
+
+
+def graphql_qry():
+    # // run a graphql query using the query macro defined in Stata code
+    qry=Macro.getLocal("qry")
+    url=Macro.getLocal("url")
+    run_query(url, qry)
         
 def run_query(URL, query):
-    # // For example, URL="https://demo.mysurvey.solutions/graphql"
     request = requests.post(URL, json={'query': query}, auth=get_credentials())
     if request.status_code == 200:
         result=request.json()
         if ('errors' in result):
+          SFIToolkit.errprintln("Query was completed with error(s):")
+          z=1
           for e in result['errors']:
-            SFIToolkit.errprintln(e['message'])
+            SFIToolkit.errprintln(str(z)+" "+e['message'])
+            z=z+1
           raise Exception("Query was completed with an error!")
         return result
     else:
@@ -895,10 +847,8 @@ def maps_getmaps(URL, fm, fu):
     """
 
     result = run_query(URL, query) # Execute the query
-    #print(result)
-
     maps=result['data']['maps']
-    #print(maps['totalCount'])
+
     SFIToolkit.stata("frame change "+fm)
     for node in maps['nodes']:
         Data.addObs(1)
@@ -969,7 +919,94 @@ def maps_deletemap(URL, map, workspace):
         }
       }""" % (map, workspace)
     result = run_query(URL, query) # Execute the query
-end
+
+def interview_properties(URL, workspace, interviewKey):
+    query="""
+    { #
+  interviews(workspace: "%s", where: {key:{eq:"%s"}}) {
+   nodes {
+        actionFlags
+        assignmentId
+        id
+        status
+        responsibleName
+        responsibleId
+        responsibleRole
+        supervisorName
+        wasCompleted
+        createdDate
+        key
+        clientKey
+        updateDateUtc
+        receivedByInterviewerAtUtc
+        errorsCount
+        questionnaireId
+        questionnaireVariable
+        questionnaireVersion
+        identifyingData {
+          entity {
+            identifying
+            label
+            options {
+              parentValue
+              title
+              value
+            }
+            questionText
+            scope
+            type
+            variable
+          }
+          answerValue
+          value
+        }
+        notAnsweredCount
+        calendarEvent {
+          assignmentId
+          comment
+          creatorUserId
+          interviewId
+          interviewKey
+          isCompleted
+          publicKey
+          startTimezone
+          startUtc
+          updateDateUtc
+        }
+       }
+      }
+    }
+    """ % (workspace, interviewKey)
+    if (read_property("verbose")=="true"):
+      print(URL, query)
+    result=run_query(URL, query)
+    if (read_property("verbose")=="true"):
+      print(result)
+    rsavejson(result['data']['interviews']['nodes'][0])
+    
+    ce=result['data']['interviews']['nodes'][0]['calendarEvent']
+    if (ce!=None):
+      rsavejsonpfix(ce,"ce")
+    i=result['data']['interviews']['nodes'][0]['identifyingData']
+    if (read_property("verbose")=="true"):
+      print(i)
+    
+    # // Question type is any of the: SINGLEOPTION, MULTYOPTION, NUMERIC, DATETIME, GPSCOORDINATES, TEXT, TEXTLIST, QRBARCODE, MULTIMEDIA, AREA, AUDIO
+    # // Identifying can be only: SINGLEOPTION, NUMERIC, DATETIME, GPSCOORDINATES, TEXT
+    if (i!=None and len(i)>0):
+      # // rsavejsonpfix(i,"i")
+      for id in i:
+        entity=id['entity']
+        t=entity['type']
+        if (t=="NUMERIC" or t=="DATETIME"):
+          v=id['value']
+        else:
+          v=id['answerValue']
+        if (read_property("verbose")=="true"):
+          print(id['entity']['variable'],v)
+      
+end 
+// === END OF PYTHON DEFINITIONS ===
 
 
 
@@ -980,7 +1017,12 @@ program define .new
     
     .inittime=`"`c(current_time)'"'
     .initdate=`"`c(current_date)'"'
-    .workspace="primary" // always present and can't be removed
+    
+    if `"$SUSOAPIVERBOSE"' != "" {
+        .verbose=`'"$SUSOAPIVERBOSE"'
+    }
+    
+    .workspace="primary" // default workspace that is always present and can't be removed
     
     if (`"`inittime'"'!=`"`c(current_time)'"') {
       .inittime=`"`c(current_time)'"'
@@ -1011,7 +1053,7 @@ program define .new
     display as text `"`.versionstr'"'
 
     // Now check the server for responding
-    python: Macro.setLocal("c",str(check("`.server'", "`.username'", "`.password'")))
+    python: Macro.setLocal("c",str(check()))
     if (`c' < 0) exit 3333
     
     // Now display the user identity
@@ -1049,7 +1091,7 @@ program define .qx_document
     if (_rc & `"`replace'"'=="") {
         error 602
     }
-    python : qx_doc("`.server'", "`.username'", "`.password'", "`qguid'", `qversion')
+    python : qx_doc("`qguid'", `qversion')
 end
 
 
@@ -1069,7 +1111,7 @@ program .qx_list
     generate str32 qx_var=""
     generate strL  qx_lastentry=""  
 
-    python : qx_list("`.server'","`.username'","`.password'")
+    python : qx_list()
 end
 
 program define qx_interviews
@@ -1094,7 +1136,7 @@ program define qx_interviews
     generate byte received_by_device=.
     generate strL received_by_device_at_utc=""
 
-    python : qx_interviews("`.server'","`.username'","`.password'", "`qguid'", `qversion')
+    python : qx_interviews("`qguid'", `qversion')
 
 end
 
@@ -1102,7 +1144,6 @@ program .qx_setaudio
     version 16.0
     args qguid qversion value
     susoapi_qx_setaudio, ///
-      server("`.server'") apiname("`.username'") apipass("`.password'") ///
       qguid("`qguid'") qversion(`qversion') ///
       value(`value')
 end
@@ -1110,18 +1151,18 @@ end
 program .notice_set
     version 16.0
     args message
-    python: notice_set("`.server'","`.username'","`.password'", "`message'")
+    python: notice_set("`message'")
 end
 
 program .notice_get
     version 16.0
-    python: notice_get("`.server'","`.username'","`.password'")
+    python: notice_get()
     class exit `"`message'"'
 end
 
 program .notice_delete
     version 16.0
-    python: notice_delete("`.server'","`.username'","`.password'")
+    python: notice_delete()
 end
 
 program .users_supervisors
@@ -1136,25 +1177,25 @@ program .users_supervisors
     generate str36 user_id=""
     generate str40 creation_date=""
     generate is_locked=.
-    python: users_supervisors("`.server'","`.username'","`.password'")
+    python: users_supervisors()
 end
 
 program .users_supervisor
     version 16.0
     args guid
-    python: users_supervisor("`.server'","`.username'","`.password'","`guid'")
+    python: users_supervisor("`guid'")
 end
 
 program .users_interviewer
     version 16.0
     args guid
-    python: users_interviewer("`.server'","`.username'","`.password'","`guid'")
+    python: users_interviewer("`guid'")
 end
 
 program .users_user
     version 16.0
     args guid
-    python: users_user("`.server'","`.username'","`.password'","`guid'")
+    python: users_user("`guid'")
 end
 
 program .users_create
@@ -1184,7 +1225,7 @@ program .users_create
     local qry `"{ "Role": "`role'", "UserName": "`username'", "FullName": "`fullname'","PhoneNumber": "`phonenumber'"`mailcontact',"Password": "`password'","Supervisor": "`supervisor'" }"'
     display `"`qry'"'
     
-    python: users_create("`.server'","`.username'","`.password'")
+    python: users_create()
     if missing(r(UserID)) {
         display as error "Error! User was not created"
         error 196
@@ -1194,13 +1235,13 @@ end
 program .users_archive
     version 16.0
     args guid
-    python: users_archive("`.server'","`.username'","`.password'","`guid'")
+    python: users_archive("`guid'")
 end
 
 program .users_unarchive
     version 16.0
     args guid
-    python: users_unarchive("`.server'","`.username'","`.password'","`guid'")
+    python: users_unarchive("`guid'")
 end
 
 program .users_interviewers
@@ -1216,12 +1257,13 @@ program .users_interviewers
     generate str40 creation_date=""
     generate is_locked=.
     
-    python: users_interviewers("`.server'","`.username'","`.password'","`guid'")
+    python: users_interviewers("`guid'")
 end
 
 program define .users_interviewersall
     version 16.0
     args saveto
+    local workspace `"`.workspace'"'
     python: users_interviewersall()
 end
 
@@ -1247,7 +1289,7 @@ program .users_actionslog
     local from=subinstr(`"`from'"',":","%3A",.)
     local to=subinstr(`"`to'"',":","%3A",.)
     
-    python: users_actionslog("`.server'","`.username'","`.password'","`user'", "`from'", "`to'")
+    python: users_actionslog("`user'", "`from'", "`to'")
     
 end
 
@@ -1334,7 +1376,7 @@ program define export2
   
   local downloaded=0
   
-  capture noisily python : export("`.server'","`.username'","`.password'")
+  capture noisily python : export()
   
   if (_rc==7102) {
     display as error ///
@@ -1561,7 +1603,7 @@ program define .assignments_getaudio
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
-    
+    return clear
     python: assignments_getaudio(`assignmentid')
 end
 
@@ -1701,13 +1743,13 @@ program define .maps_getmaps
         frame change default
     }
     
-    python: maps_getmaps("`.server'/graphql","`maps'","`users'")
+    python: maps_getmaps("`.graphql'","`maps'","`users'")
 end
 
 program define .users_reflect
     // Get properties of the current user
     version 16.0
-    python: users_reflect("`.server'/graphql")
+    python: users_reflect("`.graphql'")
     .userroles="`userroles'"
     .userworkspaces="`userworkspaces'"
     .userid="`userid'"
@@ -1719,8 +1761,7 @@ program define .maps_addusertomap
     version 16.0
     args map user
     
-    // local qry=`"mutation {addUserToMap(fileName: "`map'",  userName: "`user'" ){fileName}}"'
-    python: maps_addusertomap("`.server'/graphql","`map'","`user'","`.workspace'")
+    python: maps_addusertomap("`.graphql'","`map'","`user'","`.workspace'")
     // may result in error messages:
     //  Provided map already assigned to specified interviewer.
     //  Map can be assigned only to existing non archived interviewer.
@@ -1732,7 +1773,7 @@ program define .maps_deleteuserfrommap
     version 16.0
     args map user
     
-    python: maps_deleteuserfrommap("`.server'/graphql","`map'","`user'","`.workspace'")
+    python: maps_deleteuserfrommap("`.graphql'","`map'","`user'","`.workspace'")
 end
 
 
@@ -1741,9 +1782,117 @@ program define .maps_deletemap
     version 16.0
     args map 
     
-    python: maps_deletemap("`.server'/graphql","`map'","`.workspace'")
+    python: maps_deletemap("`.graphql'","`map'","`.workspace'")
     // No error is displayed if there is no such map
 end
+
+
+program define .interviewproperties
+    version 16.0
+    args interviewkey
+    
+    python: interview_properties("`.graphql'", "`.workspace'", "`interviewkey'")
+end
+
+
+program define .ce_addupdate
+    // Add or update a calendar event to an interview
+    version 16.0
+    args interviewkey date tz text
+    .interviewproperties "`interviewkey'"
+    local interviewid="`r(id)'"
+    local ceid="`r(ce_publicKey)'"
+    if (`"`ceid'"'!="") {
+        // update
+        ._ce_modify "`ceid'" "`date'" "`tz'" "`text'"
+    }
+    else {
+        // add
+        ._ce_add "`interviewkey'" "`interviewid'" "`date'" "`tz'" "`text'"
+    }
+end
+
+program define .ce_add
+    // Add a calendar event to an interview
+    version 16.0
+    args interviewkey date tz text
+    .interviewproperties "`interviewkey'"
+    local interviewid="`r(id)'"
+    local ceid="`r(ce_publicKey)'"
+    if (`"`ceid'"'!="") {
+        display as error "Cannot add calendar event for interview with key=`interviewkey', because a calendar event already exists. Only one calendar event is supported in this version."
+        error 197
+    }
+    ._ce_add "`interviewkey'" "`interviewid'" "`date'" "`tz'" "`text'"
+end
+
+program define .ce_update
+    version 16.0
+    args interviewkey date tz text
+    
+    .interviewproperties "`interviewkey'"
+    local ceid="`r(ce_publicKey)'"
+    if (`"`ceid'"'=="") {
+        display as error "Cannot update calendar event for interview with key=`interviewkey', because the calendar event doesn't exist yet."
+        error 197
+    }
+    
+    ._ce_modify "`ceid'" "`date'" "`tz'" "`text'"
+end
+
+program define ._ce_modify
+    version 16.0
+    // Internal, do not run directly
+    args eventkey date tz text
+    
+    local qry = `"mutation {addOrUpdateCalendarEvent(workspace: "`.workspace'", publicKey:"`eventkey'", newStart:"`date'", startTimezone:"`tz'", comment: "`text'"){comment}} "'
+    local url="`.graphql'"
+    python: graphql_qry()
+end
+
+program define ._ce_add
+    version 16.0
+    // Internal, do not run directly
+    args interviewkey interviewid date tz text
+    
+    local qry = `"mutation {addOrUpdateCalendarEvent(workspace: "`.workspace'", interviewKey:"`interviewkey'", interviewId:"`interviewid'" newStart:"`date'", startTimezone:"`tz'", comment: "`text'"){comment}} "'
+    local url="`.graphql'"
+    python: graphql_qry()
+end
+
+program define .ce_delete
+    version 16.0
+    // Deletes calendar event
+    args interviewkey
+    
+    .interviewproperties "`interviewkey'"
+    local ceid="`r(ce_publicKey)'"
+    if (`"`ceid'"'=="") {
+        display as error "Cannot delete a calendar event for interview with key=`interviewkey', because the calendar event doesn't exist for this interview."
+        error 197
+    } 
+    
+    ._ce_delete `ceid'
+end
+
+program define ._ce_delete
+    // Internal, do not run directly. Deletes a calendar event by public key.
+    version 16.0
+    args publickey
+    local qry = `"mutation {deleteCalendarEvent(workspace: "`.workspace'", publicKey:"`publickey'"){publicKey}} "'
+    local url="`.graphql'"
+    python: graphql_qry()
+end
+
+program define .graphql
+    // Returns API endpoint on the server for GraphQL queries
+    // Intended for internal use
+    version 16.0
+    class exit "`.server'/graphql"
+end
+    
+// TODO: Calendar events for assignments
+// TODO: Identification fields for interview details from GraphQL
 
 
 
