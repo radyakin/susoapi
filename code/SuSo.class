@@ -10,14 +10,15 @@ class SuSo {
   string username
   string password
   
-  string workspace  // workspace for API query
+  // workspace for API queries
+  string workspace = "primary" // default workspace that is always present and can't be removed
   
   string userid     // GUID, no dashes.
   string userroles  // if empty - APIUSER is implied, space delimited if multiple. 
   string userworkspaces // space delimited list of workspaces to which the user has access, may be empty.
   
   string verbose="false"
-}
+}, inherit(SuSoBase)
 
 python:
 import numbers
@@ -25,6 +26,7 @@ import time
 import requests
 from sfi import Macro, Data, Scalar, SFIToolkit
 
+# // Python globals:
 ajheader={'Content-type': 'application/json'}
 ajpheader={'Content-type': 'application/json-patch+json'}
 
@@ -40,7 +42,7 @@ def checkurl(url):
 def checkserver():
 
   try:
-    r = requests.get(get_server_url() + "/.hc")
+    r = requests.get(get_server() + "/.hc")
     if (r.status_code==404):
       Macro.setLocal("downloaded",str(-10404))
       return -10404
@@ -68,14 +70,12 @@ def checkapi():
   return 0
   
 def check():
-  c=checkurl(get_server_url())
+  c=checkurl(get_server())
   if (c < 0):
     return -1
-  
   c=checkserver()
   if (c < 0):
     return -1
-  
   c=checkapi()
   if (c < 0):
     if (c==-401):
@@ -200,11 +200,7 @@ def qx_doc(qguid, qversion):
   # // This is currently a JSON-formatted text document
   
   URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/document"
-  filedata=requests.get(
-    URL,
-    headers=ajheader, 
-    data={},
-    auth=get_credentials())
+  filedata=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   if (read_property("verbose")=="true"):
     print(filedata)
   saveto=Macro.getLocal("saveto")
@@ -467,8 +463,9 @@ def users_interviewers(guid):
     page=0
     while(const_pagesize*page<totalcount):
       page=page+1
-      URL=f"{get_server_url()}/api/v1/supervisors/'+guid+'/interviewers?limit={str(const_pagesize)}&offset={str(page)}"
+      URL=f"{get_server_url()}/api/v1/supervisors/{guid}/interviewers?limit={str(const_pagesize)}&offset={str(page)}"
       if (read_property("verbose")=="true"):
+        print(URL)
         print("Processing page: ", page)
       response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
       for s in response.json()["Users"]:
@@ -648,8 +645,8 @@ def interviews_delete(guid):
   URL=f"{get_server_url()}/api/v1/interviews/{guid}"
   response=requests.delete(URL, headers=ajpheader, auth=get_credentials())
   if (read_property("verbose")=="true"):
-    print(response.status_code)
-  
+    print(response)
+  Macro.setLocal('status_code', str(response.status_code))
   # // 406 for completed interviews ???
   
 def interviews_assign(intguid, responsibleguid):
@@ -702,14 +699,27 @@ def assignments_getaudio(assignmentid):
     response = requests.get(f"{get_server_url()}/api/v1/assignments/{assignmentid}/recordAudio", data={}, auth=get_credentials())
     Scalar.setValue("r(status_code)", response.status_code)
     if (response.ok):
-      Scalar.setValue("r(record_audio)",response.json()['Enabled'])
+      Scalar.setValue("r(record_audio)", response.json()['Enabled'])
+      
+def qx_setaudio(qxguid, qxversion, audio):
+    URL=f"{get_server_url()}/api/v1/questionnaires/{qxguid}/{qxversion}/recordAudio"
+    response = requests.post(URL, headers=ajpheader, json={'Enabled':audio}, auth=get_credentials())  
+    Scalar.setValue('r(status_code)', response.status_code)
+    
+def qx_getaudio(qxguid, qxversion):
+    URL=f"{get_server_url()}/api/v1/questionnaires/{qxguid}/{qxversion}/recordAudio"
+    response = requests.get(URL, data={}, auth=get_credentials())
+    Scalar.setValue("r(status_code)", response.status_code)
+    if (response.ok):
+      Scalar.setValue("r(record_audio)", response.json()['isAudioRecordingEnabled'])   # // For assignments it is: 'Enabled' Why??
 
 def assignments_setaudio(assignmentid, audio):
+    # // TODO: standardize this
     enabled=(audio!=0)
     URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/recordAudio"
     response = requests.patch(URL, json={'Enabled':enabled}, auth=get_credentials())
     Scalar.setValue("r(status_code)", response.status_code)
-    
+
 def assignments_changequantity(assignmentid, num):
     URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/changequantity"
     response=servepatchdata(URL,str(num))
@@ -721,7 +731,10 @@ def assignments_history(assignmentid):
 
   URL=f'{get_server_url()}/api/v1/assignments/{assignmentid}/history'
   y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
-  
+  if (y.status_code==404):
+    Scalar.setValue('r(status_code)',-10404)
+    return -10404
+      
   totalcount=y.json()["RecordsFiltered"]
   if (read_property("verbose")=="true"):
     print(totalcount, " events in the history of assignment ", assignmentid)
@@ -730,7 +743,7 @@ def assignments_history(assignmentid):
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/history?length={const_pagesize}&start={page}"
+    URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}/history?length={const_pagesize}&start={const_pagesize*(page-1)}"
     if (read_property("verbose")=="true"):
       print("Processing page: ", page)
     y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
@@ -1022,8 +1035,6 @@ program define .new
         .verbose=`'"$SUSOAPIVERBOSE"'
     }
     
-    .workspace="primary" // default workspace that is always present and can't be removed
-    
     if (`"`inittime'"'!=`"`c(current_time)'"') {
       .inittime=`"`c(current_time)'"'
       .initdate=`"`c(current_date)'"'
@@ -1076,7 +1087,7 @@ program define .new
     
 end
 
-program .set
+program define .set
     args server username password
     .server   = "`server'"
     .username = "`username'"
@@ -1095,7 +1106,7 @@ program define .qx_document
 end
 
 
-program .qx_list
+program define .qx_list
     version 16.0
     syntax , [frame(string)]
   
@@ -1140,32 +1151,39 @@ program define qx_interviews
 
 end
 
-program .qx_setaudio
+program define .qx_setaudio
     version 16.0
-    args qguid qversion value
-    susoapi_qx_setaudio, ///
-      qguid("`qguid'") qversion(`qversion') ///
-      value(`value')
+    args qguid qversion audio
+    .boolstandard `audio'
+    local audio = "`r(result)'"
+    python: qx_setaudio("`qguid'", "`qversion'", "`audio'")
 end
 
-program .notice_set
+program define .qx_getaudio
+    version 16.0
+    args qguid qversion
+    python: qx_getaudio("`qguid'", "`qversion'")
+end
+
+
+program define .notice_set
     version 16.0
     args message
     python: notice_set("`message'")
 end
 
-program .notice_get
+program define .notice_get
     version 16.0
     python: notice_get()
     class exit `"`message'"'
 end
 
-program .notice_delete
+program define .notice_delete
     version 16.0
     python: notice_delete()
 end
 
-program .users_supervisors
+program define .users_supervisors
     version 16.0
     args framename
     if !missing(`"`framename'"') {
@@ -1176,29 +1194,29 @@ program .users_supervisors
     generate strL user_name=""
     generate str36 user_id=""
     generate str40 creation_date=""
-    generate is_locked=.
+    generate byte is_locked=.
     python: users_supervisors()
 end
 
-program .users_supervisor
+program define .users_supervisor
     version 16.0
     args guid
     python: users_supervisor("`guid'")
 end
 
-program .users_interviewer
+program define .users_interviewer
     version 16.0
     args guid
     python: users_interviewer("`guid'")
 end
 
-program .users_user
+program define .users_user
     version 16.0
     args guid
     python: users_user("`guid'")
 end
 
-program .users_create
+program define .users_create
     version 16.0
     syntax , role(string) username(string) password(string) ///
              [supervisor(string)] ///
@@ -1232,19 +1250,19 @@ program .users_create
     }
 end
 
-program .users_archive
+program define .users_archive
     version 16.0
     args guid
     python: users_archive("`guid'")
 end
 
-program .users_unarchive
+program define .users_unarchive
     version 16.0
     args guid
     python: users_unarchive("`guid'")
 end
 
-program .users_interviewers
+program define .users_interviewers
     version 16.0
     args guid framename
     if !missing(`"`framename'"') {
@@ -1268,7 +1286,7 @@ program define .users_interviewersall
 end
 
 
-program .users_actionslog
+program define .users_actionslog
     version 16.0
     syntax , user(string) [framename(string)] from(string) to(string)
     if !missing(`"`framename'"') {
@@ -1293,7 +1311,7 @@ program .users_actionslog
     
 end
 
-program define export2
+program define .export2
   version 16.0
   syntax , qid(string) ///
            saveto(string) [replace] ///
@@ -1409,6 +1427,11 @@ program define export2
   display as text `"file `saveto' saved (`=string(`downloaded',"%20.0gc")' bytes)"'
 end
 
+program define .interviews_reject
+    version 16.0
+    args guid comment responsible
+    python: interviews_reject("`guid'", "`comment'","`responsible'")
+end
 
 program define .interviews_approve
     version 16.0
@@ -1416,16 +1439,10 @@ program define .interviews_approve
     python: interviews_approve("`guid'", "`comment'")
 end
 
-program define .interviews_reject
+program define .interviews_hqreject
     version 16.0
     args guid comment responsible
-    python: interviews_reject("`guid'", "`comment'","`responsible'")
-end
-
-program define .interviews_hqunapprove
-    version 16.0
-    args guid comment
-    python: interviews_reject("`guid'", "`comment'")
+    python: interviews_hqreject("`guid'", "`comment'","`responsible'")
 end
 
 program define .interviews_hqapprove
@@ -1434,10 +1451,10 @@ program define .interviews_hqapprove
     python: interviews_hqapprove("`guid'", "`comment'")
 end
 
-program define .interviews_hqreject
+program define .interviews_hqunapprove
     version 16.0
-    args guid comment responsible
-    python: interviews_hqreject("`guid'", "`comment'","`responsible'")
+    args guid comment
+    python: interviews_hqunapprove("`guid'", "`comment'")
 end
 
 program define .interviews_getpdf
@@ -1493,7 +1510,20 @@ end
 program define .interviews_delete
     version 16.0
     args guid
+    
+    .guidstandard `guid', format(dash)
+    local guid="`r(result)'"
+
     python: interviews_delete("`guid'")
+
+    if (`status_code'==404) {
+        display as error "Error! Interview `guid' is not found."
+        error 10101
+    }
+    if (`status_code'==406) {
+        display as error "Error! Interview `guid' may not be deleted."
+        error 10102
+    }
 end
 
 program define .interviews_assign
@@ -1521,19 +1551,6 @@ program define .interviews_comment
     // specifically as #, or #-#, or #-#-#, or #-#-#-#
     // todo: add validation here
     python: interviews_comment("`interviewguid'", "`questionguid'", "`comment'")
-end
-
-program define .rostervectoraddress, rclass
-  // Converts a RosterVectorAddress written in 
-  // the Survey Solutions convention into a 
-  // fragment of an URL query.
-  version 16.0
-  args rva
-  if missing(`"`rva'"') exit
-  local word "rosterVector"
-  local rva=subinstr(`"`rva'"',"-","&`word'=",.)
-  local rva=subinstr(`"`word'=`rva'"',"`word'=&`word'=","`word'=-",.)
-  return local result `"`rva'&"'
 end
 
 program define .interviews_varcomment
@@ -1647,7 +1664,7 @@ end
 program define .assignments_history
     // Returns the history of an assignment in the data area
     version 16.0
-    args assignmentid frame
+    args assignmentid framename
     
     if (missing(`"`assignmentid'"')) {
         display as error "Error! Assignment ID (numeric) is required."
@@ -1679,7 +1696,7 @@ program define .assignments_assign
     }
     
     if (missing(`"`responsiblelogin'"')) {
-        display as error "Error! Responsible person's login name couldn't be specified at the moment."
+        display as error "Error! Responsible person's login name is required."
         exit 5002
     }
 
@@ -1689,30 +1706,14 @@ end
 program define .assignments_getdetails
     // # Returns assignment details
     version 16.0
-    args assignmentid responsiblelogin
+    args assignmentid
+    //todo: further confirm that the assignment ID is a number.
     if (missing(`"`assignmentid'"')) {
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
     python: assignments_getdetails(`assignmentid')
 end
-
-program define .pick_value
-    // Picks one identifying variable value by name from results saved in r()
-    version 16.0
-    args vn
-    
-    local n=r(id_count)
-    local i=1
-    while `i'<=`n' {
-        if (`"`r(id_variable`i')'"'==`"`vn'"') {
-            class exit `"`r(id_answer`i')'"'
-        }
-        local i=`i'+1
-    }
-    class exit ""
-end
-
 
 program define .maps_getmaps
     // Get the list of maps and map users

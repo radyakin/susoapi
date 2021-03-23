@@ -1,0 +1,105 @@
+/* 
+
+   Survey Solutions API base class
+   Sergiy Radyakin, The World Bank, 2021
+   
+*/
+
+class SuSoBase {
+}
+
+program define .boolstandard, rclass
+  version 16.0
+  syntax anything
+  
+  local trueval = "true"
+  local falseval = "false"
+  
+  capture confirm number `anything'
+  if (!_rc) {
+  	return local result=cond(`anything'==0, "`falseval'", "`trueval'")
+    exit      
+  }
+  
+  local anything=strlower(`"`anything'"')
+  
+  if inlist(`"`anything'"',"true","on","+","activate") {
+  	return local result="`trueval'"
+    exit
+  }
+  
+  if inlist(`"`anything'"',"false","off","-","deactivate") {
+  	return local result="`falseval'"
+    exit
+  }
+  
+  display as error `"Unknown value: `anything'"'
+  error 197  
+end
+
+
+program define .pick_value
+    // Picks one identifying variable value by name from results saved in r()
+    version 16.0
+    args vn
+    
+    local n=r(id_count)
+    local i=1
+    while `i'<=`n' {
+        if (`"`r(id_variable`i')'"'==`"`vn'"') {
+            class exit `"`r(id_answer`i')'"'
+        }
+        local i=`i'+1
+    }
+    class exit ""
+end
+
+
+program define .rostervectoraddress, rclass
+  // Converts a RosterVectorAddress written in the Survey Solutions' 
+  // convention into a fragment of an URL query.
+  
+  version 16.0
+  args rva
+  if missing(`"`rva'"') exit
+  local word "rosterVector"
+  local rva=subinstr(`"`rva'"',"-","&`word'=",.)
+  local rva=subinstr(`"`word'=`rva'"',"`word'=&`word'=","`word'=-",.)
+  return local result `"`rva'&"'
+end
+
+
+program define .guidstandard, rclass
+  version 16.0
+  syntax anything, format(string)
+  assert inlist(`"`format'"',"short","dash")
+  
+  local guid=strtrim(strlower(`"`anything'"'))
+  local guid=subinstr(`"`guid'"',"-","",.)
+  if strlen(`"`guid'"')!=32 {
+  	display as error "Error! Invalid GUID: `anything'"
+    error 197
+  }
+  forval i=1/32 {
+  	local c=substr(`"`guid'"',`i',1)
+  	if !(inlist(`"`c'"',"0","1","2","3","4","5","6","7") | ///
+         inlist(`"`c'"',"8","9","a","b","c","d","e","f")) {
+        display as error "Error! Invalid GUID: `anything'"     	
+        error 197
+    }
+  }
+  
+  if "`format'"=="short" {
+  	return local result="`guid'"
+    exit
+  }
+  // 2c164276-eda2-4db5-9f3e-23c0097390e8
+  return local result = ///
+         substr("`guid'", 1, 8) + "-" + ///
+         substr("`guid'", 9, 4) + "-" + ///
+         substr("`guid'",13, 4) + "-" + ///
+         substr("`guid'",17, 4) + "-" + ///
+         substr("`guid'",21,12)
+end
+// END OF FILE
+
