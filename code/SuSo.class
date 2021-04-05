@@ -1,3 +1,10 @@
+/* 
+
+   Survey Solutions API class
+   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2021
+   
+*/
+
 class SuSo {
   
   string wrapperver="1.0"
@@ -16,6 +23,7 @@ class SuSo {
   string userid     // GUID, no dashes.
   string userroles  // if empty - APIUSER is implied, space delimited if multiple. 
   string userworkspaces // space delimited list of workspaces to which the user has access, may be empty.
+  string userworkspacese // a subset of .userworkspaces, which are enabled (may be empty).
   
   string verbose="false"
 }, inherit(SuSoBase)
@@ -59,6 +67,7 @@ def checkapi():
       headers=ajheader, 
       data={},
       auth=get_credentials())
+    
     if (y.status_code!=200):
       return -y.status_code
     if (y.json()['Message']==None):
@@ -79,8 +88,12 @@ def check():
   c=checkapi()
   if (c < 0):
     if (c==-401):
-      SFIToolkit.errprint("Server responded: 401 Unauthorized.")
+      SFIToolkit.errprintln("Server responded: 401 Unauthorized.")
       SFIToolkit.errprintln("Please check that the API user name and password are valid for this server.")
+      return c
+    if (c==-403):
+      SFIToolkit.errprintln("Server responded: 403 Forbidden.")
+      SFIToolkit.errprintln("Please check that the API user is given access to the requested resource for this server.")
       return c
     return -1
 
@@ -88,7 +101,7 @@ def check():
   return 0
 
 def read_property(s):
-    return SFIToolkit.macroExpand(f"`=char(96)'.{s}`=char(39)'")
+    return SFIToolkit.macroExpand(f"`=char(96)'macval(.{s})`=char(39)'")
   
 def get_server():
     return read_property("server")
@@ -1017,8 +1030,118 @@ def interview_properties(URL, workspace, interviewKey):
           v=id['answerValue']
         if (read_property("verbose")=="true"):
           print(id['entity']['variable'],v)
-      
+
+def workspaces_getdetails(name):
+    response = serveget(f"{get_server_url()}/api/v1/workspaces/{name}")
+    if (response.status_code==200):
+      rsavejson(response.json())
+          
+def workspaces_disable(name):
+    response = servepostdata(f"{get_server_url()}/api/v1/workspaces/{name}/disable",None)
+    print(response)
+    
+def workspaces_enable(name):
+    response = servepostdata(f"{get_server_url()}/api/v1/workspaces/{name}/enable",None)
+    print(response)
+
+def workspaces_update(name, newtitle):
+    URL=f"{get_server_url()}/api/v1/workspaces/{name}/"
+    data={"DisplayName":newtitle}
+    response = servepatchdata(URL,data)
+    
+def workspaces_create(name, newtitle):
+    URL=f"{get_server_url()}/api/v1/workspaces"
+    data={"Name":name, "DisplayName":newtitle}
+    response = servepostdata(URL,data)
+    print(response)
+    # // Normal: 201
+
+def workspaces_delete(name):
+    URL=f"{get_server_url()}/api/v1/workspaces/{name}/"
+    data={}
+    response = requests.delete(URL, headers=ajpheader, auth=get_credentials())
+    print(response)
+    # // Normal: 200
+
+def workspaces_status(name):
+    # // why not /{name}/status??
+    URL=f"{get_server_url()}/api/v1/workspaces/status/{name}/" 
+    data={}
+    response = serveget(URL)
+    print(response)
+    print(response.json())
+    rsavejson(response.json())
+    # // Normal: 200
+    
+def workspaces_assign(workspaces, users, mode):
+    URL=f"{get_server_url()}/api/v1/workspaces/assign"
+    # // todo: check behavior for multiple users/multiple workspaces
+    data={"UserIds":users.split(" "), "Workspaces":workspaces.split(" "), "Mode":mode}
+    response = servepostdata(URL,data)
+    Scalar.setValue("r(status_code)", response.status_code)
+    # // Normal: 204
+    # // For non-existant user or workspace: 400
+    
+def workspaces_list(userguid, includedisabled):
+  # // Returns the list of workspaces
+  # // - for a particular user with GUID=userguid
+  # // - includes disabled if includedisabled is TRUE
+
+  sfx=""
+  if (userguid!=""):
+    sfx=f"UserId={userguid}"
+  if (includedisabled):
+    sfx=f"{sfx}&IncludeDisabled=true"
+  print(sfx)
+  URL=f'{get_server()}/api/v1/workspaces?{sfx}'
+  print(URL)
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+  if (y.status_code==404):
+    Scalar.setValue('r(status_code)',-10404)
+    return -10404
+  print(y.json())
+  totalcount=y.json()["TotalCount"]
+  if (read_property("verbose")=="true"):
+    print(totalcount, " workspaces on the server ")
+  
+  const_pagesize=30
+  page=0
+  while(const_pagesize*page<totalcount):
+    page=page+1
+    URL=f"{get_server()}/api/v1/workspaces?length={const_pagesize}&start={const_pagesize*(page-1)}{sfx}"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+    if (read_property("verbose")=="true"):
+      print(y)
+    
+    items=y.json()["Workspaces"]
+    for h in items:
+        if (read_property("verbose")=="true"):
+          print(h)
+        Data.addObs(1)
+        n=Data.getObsTotal()-1
+        if (h["Name"]!=None):
+          Data.storeAt("name",n,h["Name"])
+        if (h["DisplayName"]!=None):
+          Data.storeAt("display_name",n,h["DisplayName"])
+        if (h["DisabledAtUtc"]!=None):
+          Data.storeAt("disabled_at_utc",n,h["DisabledAtUtc"])
+
+
+def assignments_create():
+  # // Creates a new assignment
+  
+  URL=f"{get_server_url()}/api/v1/assignments"
+  qry=Macro.getLocal("qry")
+  result=requests.post(URL, headers=ajpheader, data=qry, auth=get_credentials())
+  print(result)
+  print(result.status_code)
+  
+
+
 end 
+
 // === END OF PYTHON DEFINITIONS ===
 
 
@@ -1063,6 +1186,29 @@ program define .new
     display as text `"{browse "`.server'":`.server'}"'
     display as text `"`.versionstr'"'
 
+    quietly pwf
+    local cframe `"`=r(currentframe)'"'
+
+    local printable ""
+    local enabledws ""
+    .users_reflect
+    quietly foreach w in `.userworkspaces' {
+        quietly ds // needed here, do not remove
+        .workspace="`w'"
+        capture noisily .workspaces_getdetails `w'
+        if (!missing(`"`r(Name)'"')) {
+          local enabledws=strtrim(`"`enabledws' `w'"')
+          local printable=strtrim(`"`printable' `w'"')
+        }
+        else {
+          local printable=strtrim(`"`printable' `w'*"')
+        }
+    }
+    
+    // display "The following workspaces are enabled: [`enabledws'] of [`.userworkspaces']."
+    .workspace="`:word 1 of `enabledws''"
+    // todo: stop if there are no active workspaces
+    
     // Now check the server for responding
     python: Macro.setLocal("c",str(check()))
     if (`c' < 0) exit 3333
@@ -1072,7 +1218,7 @@ program define .new
     display as text "User `.username':"
     display as text "- identity: " as result "`.userid'"
     display as text "- role: " as result "`.userroles'"
-    display as text "- access to workspaces: " as result "`.userworkspaces'"
+    display as text "- access to workspaces: " as result "`printable'"
     
     display as text "{break}"
     display as text "Here are just some things you could do:"
@@ -1088,10 +1234,11 @@ program define .new
 end
 
 program define .set
-    args server username password
-    .server   = "`server'"
-    .username = "`username'"
-    .password = "`password'"
+    args server username password workspace
+    .server    = "`server'"
+    .username  = "`username'"
+    .password  = "`password'"
+    .workspace = "`workspace'"
 end
 
 program define .qx_document
@@ -1717,6 +1864,7 @@ end
 
 program define .maps_getmaps
     // Get the list of maps and map users
+    version 16.0
     args maps users
     
     capture frame drop `maps'
@@ -1754,6 +1902,32 @@ program define .users_reflect
     .userroles="`userroles'"
     .userworkspaces="`userworkspaces'"
     .userid="`userid'"
+    
+    
+end
+
+program define .actualize_workspaces
+    version 16.0
+    
+    // preserve currently active workspace
+    local w=`"`.workspace'"'
+    
+    quietly foreach w in `.userworkspaces' {
+        quietly ds // needed here, do not remove
+        .workspace="`w'"
+        capture noisily .workspaces_getdetails `w'
+        if (!missing(`"`r(Name)'"')) {
+          local enabledws=strtrim(`"`enabledws' `w'"')
+        }
+    }
+    
+    .userworkspacese = `"`enabledws'"'
+    
+    // may be incorrect to set the active workspace to a workspace that 
+    // may have been deleted, disabled, or became inaccessible to the 
+    // user due to permissions
+    
+    .workspace="`w'"
 end
 
 
@@ -1895,7 +2069,182 @@ end
 // TODO: Calendar events for assignments
 // TODO: Identification fields for interview details from GraphQL
 
+program define .workspaces_getdetails
+    version 16.0
+    args name
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_getdetails("`name'")
+end
+
+program define .workspaces_disable
+    version 16.0
+    args name
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_disable("`name'")
+end
+
+program define .workspaces_enable
+    version 16.0
+    args name
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_enable("`name'")
+end
+
+program define .workspaces_update
+    version 16.0
+    args name newtitle
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_update("`name'", "`newtitle'")
+end
+
+program define .workspaces_create
+    version 16.0
+    args name title
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    // Title is optional, if not specified the name is also used as the title.
+    if (missing(`"`title'"')) local title `"`name'"'
+    python: workspaces_create("`name'", "`title'")
+    // 400 if a workspace with that name already exists
+end
+
+program define .workspaces_delete
+    version 16.0
+    syntax anything, irreversible
+    // option 'irreversible' is always required
+    if (missing(`"`anything'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_delete("`anything'")
+end
+
+program define .workspaces_status
+    version 16.0
+    args name
+    if (missing(`"`name'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    python: workspaces_status("`name'")
+    // returns 500, then crashes in Python with 7102 when the workspace doesn't exist
+end
+
+program define .workspaces_assign
+    version 16.0
+
+    /* MODES:
+       - add    = give the user(s) access to specified workspace(s) 
+                  in addition to any other workspaces she currently 
+                  has access to.
+       - remove = take away the access permission to the specified
+                  workspace(s) leaving any other access permissions
+                  unaffected.
+       - assign = replace current access permissions with the 
+                  access only to specified workspaces. */
+    
+    syntax anything, users(string) workspaces(string)
+    local mode "`anything'"
+    assert inlist(`"`mode'"', "assign", "add", "remove")
+    local mode=strproper("`mode'")
+    
+    if (missing(`"`workspaces'"')) {
+        display as error "Error! Workspace name is required!"
+        error 5001
+    }
+    if (missing(`"`users'"')) {
+        display as error "Error! User name is required!"
+        error 5002
+    }
+
+    python: workspaces_assign("`workspaces'", "`users'", "`mode'")
+    if (r(status_code)==400) {
+        display as error "Server responded 400 Bad Request."
+        display as error "Check that the specified workspaces and users exist on this server."
+        error -10400
+    }
+end
+
+program define .workspaces_list
+    // Get the list of workspaces
+    version 16.0
+    syntax , [frame(string) userguid(string) includedisabled]
+    local disab="False"
+    if !missing(`"`includedisabled'"') local disab="True"
+    
+    if !missing(`"`userguid'"') {
+        .guidstandard `userguid', format(dash)
+        local userguid `"`r(result)'"'
+    }
+    
+    if !missing(`"`frame'"') {
+        capture frame drop `frame'
+        frame create `frame'
+        frame change `frame'
+    }
+    
+    clear
+    generate name=""
+    generate display_name=""
+    generate disabled_at_utc=""
+
+    python: workspaces_list("`userguid'", `disab')
+end
 
 
+program define .assignments_create, rclass
+    syntax , responsible(string) qxguid(string) [qxversion(integer 1)] ///
+             [quantity(integer 1)] /// 
+             [email(string) password(string) webmode(integer 0)] ///
+             [audio(integer 0) comment(string)] ///
+             [protected(string)] [data(string)]
+    
+    if (!missing("`password'") & !`webmode') {
+    	display as error "Error! Password may be specified only in web mode!"
+        error 7001
+    }
+    
+    if (!missing("`email'") & !`webmode') {
+    	display as error "Error! Email may be specified only in web mode!"
+        error 7002
+    }
+    
+    if (`quantity'>1 & !missing(`"`email'"')) {
+    	display as error "Error! For web assignments with specified email the quantity must be equal to 1."
+        error 7003
+    }
+    if (!`webmode' & `audio') {
+    	display as result "Warning! Audio recording is not available on the web, only on the tablets."
+    }
+    
+    
+    .boolstandard `audio'
+    local bool_audio = "`r(result)'"  
+    
+    .boolstandard `webmode'
+    local bool_web = "`r(result)'"
+    
+    // todo: ids and protected
+    
+    local qry `"{ "Responsible": "`responsible'", "Quantity": `quantity', "QuestionnaireId": "`qxguid'\$`qxversion'", "Email": "`email'", "Password": "`password'", "WebMode": `bool_web', "IsAudioRecordingEnabled": `bool_audio', "Comments": "`comment'", "IdentifyingData": [`data'], "ProtectedVariables": ["`protected'"] }"'
+
+    display `"`macval(qry)'"'
+    python: assignments_create()       
+        
+end
 
 // END OF FILE

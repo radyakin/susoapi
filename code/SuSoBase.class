@@ -1,7 +1,7 @@
 /* 
 
    Survey Solutions API base class
-   Sergiy Radyakin, The World Bank, 2021
+   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2021
    
 */
 
@@ -71,7 +71,10 @@ end
 
 program define .guidstandard, rclass
   version 16.0
-  syntax anything, format(string)
+  syntax anything, [format(string)]
+  
+  if missing(`"`format'"') local format="short"
+  local format=strlower(`"`format'"')
   assert inlist(`"`format'"',"short","dash")
   
   local guid=strtrim(strlower(`"`anything'"'))
@@ -93,7 +96,7 @@ program define .guidstandard, rclass
   	return local result="`guid'"
     exit
   }
-  // 2c164276-eda2-4db5-9f3e-23c0097390e8
+
   return local result = ///
          substr("`guid'", 1, 8) + "-" + ///
          substr("`guid'", 9, 4) + "-" + ///
@@ -101,5 +104,40 @@ program define .guidstandard, rclass
          substr("`guid'",17, 4) + "-" + ///
          substr("`guid'",21,12)
 end
+
+
+program define .buildvars, rclass
+    version 16.0
+    // TODO: add check for consistency of ids (id* variables)
+    local iddata ""
+    forval i=1/`=_N' {
+        local v `"`=variable[`i']'"'
+        local a `"`=answer[`i']'"'
+        local sfx=""
+        local j=1
+        while (`j'<=4 & id`j'[`i']!=.) {
+            local sfx `"`sfx'_`=id`j'[`i']'"'
+            local j=`j'+1
+        }
+        if !missing(id1[`i']) {
+        	// identification by identity
+            local id "Identity"
+            .guidstandard `=identity[`i']', format(short)
+            local v=`"`=r(result)'`sfx'"'
+        }
+        else {
+        	// identification by varname
+            local id "Variable"
+            local v=`"`=variable[`i']'"'
+        }
+        local iddata = `"`iddata', {"`id'":"`v'", "Answer":"`a'"}"'
+    }
+    if (strpos(`"`iddata'"',", ")==1) {
+        local iddata=substr(`"`iddata'"',3,.)
+    }
+    return local result = `"`iddata'"'
+end
+
+
 // END OF FILE
 
