@@ -17,6 +17,7 @@ jobs:
         uses: xu-cheng/latex-action@v2
         with:
           root_file: docs/susoapi.tex
+          working_directory: docs
 
       - name: Create Release
         id: create_release
