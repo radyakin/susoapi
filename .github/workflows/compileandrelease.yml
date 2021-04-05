@@ -16,7 +16,7 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v2
         with:
-          root_file: docs/susoapi.tex
+          root_file: susoapi.tex
           working_directory: docs
 
       - name: Create Release
@@ -37,6 +37,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./docs/susoapi.pdf
+          asset_path: ./susoapi.pdf
           asset_name: susoapi.pdf
           asset_content_type: pdf
