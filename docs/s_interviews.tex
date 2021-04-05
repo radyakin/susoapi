@@ -1,0 +1,226 @@
+\section{Interviews}
+\putimage{pexels-anna-shvets-5325100.jpg}
+
+\subsection{Approve an interview by a supervisor}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_approve guid [comment]
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+\item \option{guid} - GUID identifier of the interview to be approved.
+\item \option{comment} - (optional) comment, if specified will be recorded as a comment to the transaction.
+\end{itemize}
+
+\subsection{Reject an interview by a supervisor}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_reject guid [comment] [responsibleguid]
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview to be rejected.
+    \item \option{comment} - (optional) comment, if specified will be recorded
+          as a comment to the transaction.
+    \item \option{responsibleguid} - (optional) GUID identifier of the new
+          person responsible for the rejected interview.
+\end{itemize}
+
+\subsection{Unapprove an interview by a headquarters user}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_unapprove guid [comment]
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview to be unapproved.
+    \item \option{comment} - (optional) comment, if specified will be recorded
+          as a comment to the transaction.
+\end{itemize}
+
+\subsection{Approve an interview by a headquarters user}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_hqapprove guid [comment]
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview to be approved.
+    \item \option{comment} - (optional) comment, if specified will be recorded
+          as a comment to the transaction.
+\end{itemize}
+
+\subsection{Reject an interview by a headquarters user}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_hqreject guid [comment] [responsibleguid]
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview to be rejected.
+    \item \option{comment} - (optional) comment, if specified will be recorded
+          as a comment to the transaction.
+    \item \option{responsibleguid} - (optional) GUID identifier of the new
+                person responsible for the rejected interview.
+\end{itemize}
+
+\subsection{Get a PDF document for the interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_getpdf guid saveto
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview.
+    \item \option{saveto} - name of the file where the PDF document
+          for this interview must be saved.
+\end{itemize}
+
+\subsection{Get statistics for the interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_getstats guid
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview.
+\end{itemize}
+\savedres
+\begin{compactitem}
+    \item r(InterviewId) - GUID of the interview, for example: \textit{"81784070-1e55-457c-b32e-b52d9672d9c4"};
+    \item r(InterviewKey) - interview key, for example: \textit{"12-34-56-78"};
+    \item r(Status) - status of the interview, for example: \textit{"Completed"};
+    \item r(ResponsibleId) - GUID of the responsible person, for example: \textit{"39ad7fa7-4215-468b-9861-9a68b20662c2"}
+    \item r(ResponsibleName) - login name of the current responsible, for example: \textit{"SergiyHQ"};
+    \item r(InterviewDuration) - duration of the interview, for example: \textit{"00:14:48.3716360"}
+    \item r(UpdatedAtUtc) - date and time of the last update to the interview data, for example: \textit{"2021-03-19T13:00:40.048662Z"};
+    \item r(AssignmentId) - numeric assignment ID from which this interview has been started, for example: \textit{30711};
+    \item r(NumberRejectionsByHq) - number of rejections by HQ user(s), for example: \textit{0}.
+    \item r(NumberRejectionsBySupervisor) - number of rejections by supervisor user(s), for example: \textit{2}.
+    \item r(NumberOfInterviewers) - number of interviewers that this interview was processed by, for example: \textit{1}.
+    \item r(ForSupervisor) - number of supervisor questions, for example: \textit{3}.
+    \item r(ForInterviewer) - number of questions for interviewer, for example: \textit{100}.
+    \item r(WithComments) - number of questions with comments, for example: \textit{4}.
+    \item r(Invalid) - number of questions with errors, for example: \textit{1}.
+    \item r(Valid) - number of questions without errors, for example: \textit{99}.
+    \item r(Flagged) - number of questions with flags, for example: \textit{0}.
+    \item r(NotFlagged) - number of questions without flags, for example: \textit{100}.
+    \item r(Answered) - number of questions which have been answered, for example: \textit{93}.
+    \item r(NotAnswered) - number of questions which have not been answered, for example: \textit{7}.
+\end{compactitem}
+
+\subsection{Get history of the interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_gethistory guid framename
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview.
+    \item \option{framename} - (optional) name of the frame where the history
+          of the interview must be saved. If not specified, the current frame
+          is used.
+\end{itemize}
+\textbf{Interview history frame data structure}
+\begin{compactitem}
+    \datafield{string* timestamp } (for example, "\textit{2021-03-19T13:00:13.263127Z}")
+    \datafield{string* offset } (for example, "\textit{-04:00:00}")
+    \datafield{string* action } (for example, "\textit{Created}")
+    \datafield{string* originator\_name } (for example, "\textit{MariaHQ}")
+    \datafield{string* originator\_role } (for example, "\textit{Interviewer}")
+    \datafield{string* parameters } (for example, "\textit{\{'question': 'OPZ401Q', 'answer': '750000', 'roster': '1,3'\}}")
+\end{compactitem}
+*NB: The exact storage types of the string variables depend on the content
+     length and may vary.
+
+\subsection{Get answers of the interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_getanswers guid framename
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview.
+    \item \option{framename} - (optional) name of the frame where the answers
+          of the interview must be saved. If not specified, the current frame
+          is used.
+\end{itemize}
+\textbf{Interview answers frame data structure}
+\begin{compactitem}
+    \datafield{string* variablename } (for example, "\textit{hhsize}")
+    \datafield{str36 questionid } (for example, "\textit{50756294-eca7-4765-b94d-2f607dc049a0}")
+    \datafield{string* rostervector } (for example, "\textit{[1, 3]}")
+    \datafield{strL answer } (for example, "\textit{6}")
+\end{compactitem}
+
+*NB: The exact storage types of the string variables depend on the content
+     length and may vary.
+
+\subsection{Delete an interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_delete guid
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID identifier of the interview.
+\end{itemize}
+\errheader
+\begin{itemize}
+    \item Error \ecode{197} is returned if the \textit{guid} is not specified.
+    \item Error \ecode{10101} is returned if the interview with ID \textit{guid} is not found.
+    \item Error \ecode{10102} is returned if the interview with ID \textit{guid} may not be deleted.
+\end{itemize}
+
+\subsection{Assign an interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_assign intguid responsibleguid
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{intguid} - GUID identifier of the interview.
+    \item \option{responsibleguid} - GUID identifier of the new responsible.
+\end{itemize}
+
+\subsection{Assign supervisor/team to an interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_supervisorassign intguid responsibleguid
+\end{lstlisting}
+\paramsheader
+\begin{itemize}
+    \item \option{intguid} - GUID identifier of the interview.
+    \item \option{responsibleguid} - GUID identifier of the new responsible.
+\end{itemize}
+
+
+\subsection{Add a comment to a question in the interview by question GUID}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_comment, interviewguid() questionguid()
+                        comment() [rostervector()]
+\end{lstlisting}
+\optsheader
+\begin{itemize}
+    \item \option{interviewguid()} - GUID identifier of the interview.
+    \item \option{questionguid()} - GUID identifier of the question where the
+           comment must be added. NB: if GUID of the question is not known,
+           see next section 4.14 for the equivalent method utilizing the
+           variable name instead.
+    \item \option{comment()} - text of the comment that must be added, for
+           example: \textit{comment("Strange value")}
+    \item \option{rostervector()} - rostervector address of the item if the
+           question is part of the roster, for example: \textit{rostervector(5)}.
+           NB: \textit{rostervector()} (if specified) is expected to be
+           formatted according to the Survey Solutions rules: specifically
+           as \#, or \#-\#, or \#-\#-\#, or \#-\#-\#-\#.
+\end{itemize}
+
+\subsection{Add a comment to a question in the interview by variable name}
+\begin{lstlisting}[style=CommandLineStyle]
+.interviews_varcomment, interviewguid() varname()
+                        comment() [rostervector()]
+\end{lstlisting}
+\optsheader
+\begin{itemize}
+    \item \option{interviewguid()} - GUID identifier of the interview.
+    \item \option{varname()} - variable name of the question where the
+           comment must be added. NB: if varname of the question is not known,
+           see previous section 4.13 for the equivalent method utilizing the
+           question GUID instead.
+    \item \option{comment()} - text of the comment that must be added,
+           for example: \textit{comment("Strange value")}
+    \item \option{rostervector()} - rostervector address of the item if the
+           question is part of the roster, for example:
+           \textit{rostervector(5)}. NB: \textit{rostervector()} (if specified)
+           is expected to be formatted according to the Survey Solutions rules:
+           specifically as \#, or \#-\#, or \#-\#-\#, or \#-\#-\#-\#.
+\end{itemize}

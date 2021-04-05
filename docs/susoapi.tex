@@ -1,0 +1,106 @@
+%\def\BRIEF{}  %indicates a short version
+
+\documentclass[svgnames,12pt]{article}
+\usepackage{graphicx}
+\usepackage[dvipsn]{xcolor}
+\usepackage{soul}
+\usepackage{paralist}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{bbding}
+\usepackage{xstring}
+\usepackage{stringstrings}
+\usepackage{changepage}
+\usepackage[hidelinks]{hyperref}
+\definecolor{lstback}{RGB}{170, 220, 255}
+
+\usepackage[final]{listings}
+\lstset{backgroundcolor=\color{lstback}}
+
+\lstdefinestyle{CommandLineStyle}{
+  basicstyle=\small\ttfamily,
+  numbers=none,
+  upquote=true % ensure that backtick displays correctly
+}
+
+\usepackage[margin=0.75in]{geometry}
+\definecolor{syntaxcolor}{rgb}{0.6, 0, 0}
+\definecolor{ecodecolor}{rgb}{1.0, 0.7, 0.7}
+\sethlcolor{ecodecolor}
+
+
+\newcommand{\minorheader}[1]{\vskip16pt{\color{ForestGreen}\textbf{#1}}}
+\newcommand{\paramsheader}{\minorheader{Parameters}}
+\newcommand{\optsheader}{\minorheader{Options}}
+\newcommand{\savedres}{\minorheader{Saved results}}
+\newcommand{\errheader}{\minorheader{Errors}}
+\newcommand{\structheader}[1]{\minorheader{#1 frame data structure}}
+\newcommand{\ecode}[1]{\texttt{\hl{ #1 }}}
+
+\newcommand{\putimage}[1]{
+  \ifdefined\BRIEF
+  \else
+  \begin{center}
+      \includegraphics[width=170mm]{images/resized/#1}
+  \end{center}
+  \fi
+}
+
+\newcommand{\statacmd}[1]{
+      \textbf{{\color{syntaxcolor}\texttt{#1}}}
+}
+
+\newcommand{\option}[1]{{\color{syntaxcolor}\texttt{#1}}}
+
+\let\oldsection\section
+\renewcommand\section{\clearpage\oldsection}
+
+\newcommand{\datafield}[1]{
+    \item[$\diamond$]
+    {\color{blue}
+      \textit{\getaword{#1}{1}}
+      \textbf{\texttt{\getaword{#1}{2}}}
+      \removeword[e]{#1}
+      \removeword{\thestring}
+    }
+}
+
+
+\begin{document}
+% \fontfamily{phv}\selectfont
+
+%\begin{itemize} \datafield{a b c } \end{itemize} \end{document}
+
+
+\begin{titlepage}
+   \vspace*{\stretch{2.0}}
+   \begin{center}
+      \Large\textbf{Survey Solutions API client for Stata}\\
+      \vskip16pt
+      \large\textit{S.Radyakin}\\
+      \vskip16pt
+      \large\textit{sradyakin@worldbank.org}\\
+      \vskip186pt
+      \today
+   \end{center}
+   \vspace*{\stretch{2.0}}
+\end{titlepage}
+
+%  \input{s_workspaces.tex} \end{document}
+
+\tableofcontents
+  \input{s_client.tex}
+  \input{s_questionnaires.tex}
+  \input{s_assignments.tex}
+  \input{s_interviews.tex}
+  \input{s_export.tex}
+  \input{s_maps.tex}
+  \input{s_notice.tex}
+  \input{s_users.tex}
+  \input{s_calendar.tex}
+  \input{s_workspaces.tex}
+  \input{s_credits.tex}
+  \input{s_http_codes.tex}
+  \input{s_glossary.tex}
+
+\end{document}

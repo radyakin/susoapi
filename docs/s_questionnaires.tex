@@ -1,0 +1,105 @@
+\section{Questionnaires}
+\putimage{pexels-alex-green-5699456.jpg}
+
+\subsection{Get a list of questionnaires on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.qx_list, frame(string)
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+  \item \option{frame} - (optional) frame name where to save the list. If not specified, the current frame is cleared and used to store the list.
+\end{itemize}
+
+\structheader{Questionnaires list}
+\begin{compactitem}
+  \datafield{str40 qx\_identity }
+  \datafield{str32 qx\_id }
+  \datafield{long  qx\_version }
+  \datafield{strL  qx\_title }
+  \datafield{str32 qx\_var }
+  \datafield{strL  qx\_lastentry }
+\end{compactitem}
+
+
+\subsection{Get a list of interviews of a questionnaire on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.qx_interviews, qguid(string) qversion(integer) [frame(string)]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+  \item \option{qguid} - questionnaire guid identifier.
+  \item \option{qversion} - questionnaire version.
+  \item \option{frame} - (optional) name of the frame to save the list of the interviews.
+\end{itemize}
+
+\structheader{Interviews list}
+\begin{compactitem}
+  \datafield{str36 interview\_\_id }
+  \datafield{str36 qx\_guid }
+  \datafield{long qx\_version }
+  \datafield{long assignment\_id }
+  \datafield{str36 responsible\_guid }
+  \datafield{str36 responsible\_name }
+  \datafield{long errors\_count }
+  \datafield{str36 status }
+  \datafield{strL lastentry }
+  \datafield{byte received\_by\_device }
+  \datafield{strL received\_by\_device\_at\_utc }
+\end{compactitem}
+
+
+
+\subsection{Get a questionnaire document in JSON format}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.qx_document , qguid(string) qversion(integer) saveto(string) [replace]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+    \item \option{qguid} - GUID of the questionnaire as a string, for example:
+          \newline \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+    \item \option{qversion} - version of the questionnaire as imported
+          to the HQ, numeric, for example: \textit{2}
+    \item \option{saveto} - name of the file to be saved, for example:
+          \textit{"C:/Temp/qx.json"}
+    \item \option{replace} - (optional) allow overwriting the output file
+\end{itemize}
+
+\subsection{Set audio audit for the survey}
+\begin{lstlisting}[style=CommandLineStyle]
+.qx_setaudio qguid qversion value
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{qguid} - GUID of the questionnaire as a string, for example:
+          \newline
+          \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+    \item \option{qversion} - version of the questionnaire as imported
+          to the HQ, numeric, for example: \textit{2}
+    \item \option{value} - new mode of audio audit: \textit{1=ON} or
+          \textit{0=OFF}.
+\end{itemize}
+
+\subsection{Get status of audio audit for the survey}
+\begin{lstlisting}[style=CommandLineStyle]
+.qx_getaudio qguid qversion
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{qguid} - GUID of the questionnaire as a string, for example:
+          \newline
+          \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+    \item \option{qversion} - version of the questionnaire as imported
+          to the HQ, numeric, for example: \textit{2}
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(record\_audio) - numeric 1=ON or 0=OFF.
+    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+\end{compactitem}

@@ -1,0 +1,35 @@
+
+\section{Server notice message}
+
+\putimage{pexels-jill-wellington-3334361.jpg}
+
+\subsection{Set or change a server notice message}
+\begin{lstlisting}[style=CommandLineStyle]
+.notice_set message
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{message} - New message to be set up on the server as a notice message.
+\end{itemize}
+
+\subsection{Retrieve the currently set server notice message}
+\begin{lstlisting}[style=CommandLineStyle]
+.notice_get
+\end{lstlisting}
+
+\textbf{This method has no parameters or options.}
+
+The message is returned as a result of the call to this method. For example, to display the currently set notice message execute the following:
+
+\begin{lstlisting}[style=CommandLineStyle]
+display `"`.apiclient.notice_get'"'
+\end{lstlisting}
+
+\subsection{Delete/clear the currently set server notice message}
+\begin{lstlisting}[style=CommandLineStyle]
+.notice_delete
+\end{lstlisting}
+
+\textbf{This method has no parameters or options.}
+

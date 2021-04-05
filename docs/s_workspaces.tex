@@ -1,0 +1,244 @@
+\section{Workspaces}
+\putimage{pexels-tima-miroshnichenko-5453837.jpg}
+
+
+Workspaces management is a privilege and responsibility. Only some of the
+methods listed below are available to the API users. Other methods denoted
+with an asterisk (*) in the description are available only to the Survey
+Solutions administrator. You can switch the account to be used for API
+queries already after the initialization of the API client, if necessary:
+
+\vskip16pt
+
+\begin{lstlisting}[style=CommandLineStyle]
+.s.username="admin"
+.s.password="Some123Secret"
+\end{lstlisting}
+
+Note also, that the administrator always has access to all the workspaces on
+the server.
+
+
+\subsection{Obtain list of workspaces}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_list , [frame()] [userguid()] [includedisabled]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+  \item \option{frame()} - (optional) name of the frame where the list of the
+        workspaces must be saved, for example: \textit{frame("wspaces")}.
+  \item \option{userguid()} - (optional) GUID of the user, if specified the
+        list will include only the workspaces, to which this user is granted
+        access to.
+  \item \option{includedisabled} - (optional), if specified the list will also
+        include disabled workspaces; if not specified, then only enabled
+        workspaces.
+\end{itemize}
+
+\textbf{Workspaces list frame data structure}
+
+\begin{compactitem}
+    \datafield{string name } (for example, "\textit{census}")
+    \datafield{string display\_name } (for example, "\textit{Population Census 2021}")
+    \datafield{string disabled\_at\_utc } (for example, "\textit{2020-10-05T15:33:30.317233Z}")
+\end{compactitem}
+*NB: The exact storage types of the string variables depend on the content
+     length and may vary.
+
+
+\subsection{Get details of a workspace}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_getdetails name
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{name} - name of the workspace, for example: \textit{lfs}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(Name) - specified name of the workspace.
+    \item r(DisplayName) - display name that is attributed to this workspace.
+    \item r(DisabledAtUtc) - blank for workspaces that are not disabled, for
+    disabled workspaces timestamp indicating when the workspace was disabled.
+\end{compactitem}
+
+
+\subsection{*Create a workspace}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_update name [title]
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{name} - name of the new workspace, for example: \textit{lfs}.
+  \item \option{title} - title of the new workspace, for example:
+        \textit{"Labour force survey 2021q4"}. The title is optional. The name
+        of the workspace will be used also as a title if the title is not
+        specified.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+   \item Error \ecode{5001} is returned if the workspace \textit{name} is
+         not specified.
+\end{itemize}
+
+
+\subsection{*Delete a workspace}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_delete name , irreversible
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{name} - name of the workspace to be deleted, for example: \textit{lfs}.
+  \item \option{irreversible} - literally the word \textit{irreversible}. This
+        option is not optional. The user must understand that the command he
+        issues may cause irreversible damage.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+   \item Error \ecode{5001} is returned if the workspace \textit{name} is
+         not specified.
+   \item Error \ecode{198} is returned if the option \textit{irreversible} is
+         not specified.
+\end{itemize}
+
+
+\subsection{*Obtain workspace status}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_status name
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{name} - name of the workspace the status of which is to be
+        examined, for example: \textit{lfs}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+   \item Error \ecode{5001} is returned if the workspace \textit{name} is
+         not specified.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(WorkspaceName) - specified name of the workspace, for Example:
+          \textit{"census"}.
+    \item r(WorkspaceDisplayName) - display name that is attributed to this
+          workspace, for example: \textit{"Population Census 2021"}.
+    \item r(CanBeDeleted) - an flag indicating whether the workspace may be
+          deleted (1) or not (0).
+    \item r(ExistingQuestionnairesCount) - number of questionnaires that are
+          imported to this workspace.
+    \item r(InterviewersCount) - number of interviewer accounts in this
+          workspace.
+    \item r(SupervisorsCount) - number of supervisor accounts in this workspace.
+    \item r(MapsCount) - number of maps in this workspace.
+\end{compactitem}
+
+
+\subsection{*Disable a workspace}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_disable name
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{name} - name of the workspace, for example: \textit{lfs}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+\item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+\end{itemize}
+
+\subsection{*Enable a workspace}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_enable name
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{name} - name of the workspace, for example: \textit{lfs}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+\item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+\end{itemize}
+
+
+\subsection{*Assign users to workspaces}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_assign mode, users() workspaces()
+\end{lstlisting}
+
+\vskip10pt
+The \textbf{mode} can be one of the following:
+\vskip10pt
+\begin{compactitem}
+  \item \textbf{add} - give the user(s) access to specified workspace(s)
+                  in addition to any other workspaces she currently
+                  has access to.
+  \item \textbf{remove} - take away the access permission to the specified
+                  workspace(s) leaving any other access permissions
+                  unaffected.
+  \item \textbf{assign} - replace current access permissions with the
+                  access only to specified workspaces.
+\end{compactitem}
+
+\optsheader
+
+\begin{itemize}
+  \item \option{users()} - one or more user account names, for example:
+        \textit{frame("SergiyInt")}. Multiple account names must be delimited
+        with spaces, like so: \textit{frame("SergiyInt SandraSup")}.
+  \item \option{workspaces()} - one or more names of the workspaces, for
+        example: \textit{"agcensus"}. Multiple workspace names must be
+        delimited with spaces, like so: \textit{"census lfs pricesvy"}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+   \item Error \ecode{5001} is returned if the \textit{workspaces()} is
+         not specified.
+   \item Error \ecode{5002} is returned if the \textit{users()} is
+         not specified.
+\end{itemize}
+
+\subsection{Update a workspace title}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.workspaces_update name title
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{name} - name of the workspace, for example: \textit{lfs}.
+  \item \option{title} - new title of the workspace, for example: \textit{"Labour force survey 2021q4"}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+  \item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+  \item Error \ecode{5002} is returned if the workspace \textit{title} is not specified.
+\end{itemize}

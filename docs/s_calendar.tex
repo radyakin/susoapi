@@ -1,0 +1,24 @@
+\section{Calendar events}
+\putimage{pexels-anete-lusina-5239919.jpg}
+\subsection{Add or update a calendar event to an interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.ce_addupdate interviewkey date timezone text
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{interviewkey} - Interview key for the interview, where the calendar event must be modified, for example: "\textit{12-34-56-78}".
+  \item \option{date} - Date of the calendar event, for example: "\textit{2021-04-19}".
+  \item \option{timezone} - Timezone of the calendar event, for example: "\textit{EST}".
+  \item \option{text} - Text of the note of the calendar event, for example: "\textit{All household members will be available for interviewing}".
+\end{itemize}
+
+\subsection{Delete a calendar event to an interview}
+\begin{lstlisting}[style=CommandLineStyle]
+.ce_delete interviewkey
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{interviewkey} - Interview key for the interview, where the calendar event must be deleted, for example: "\textit{12-34-56-78}".
+\end{itemize}

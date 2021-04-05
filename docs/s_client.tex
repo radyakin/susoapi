@@ -1,0 +1,66 @@
+\section{Survey Solutions API Client for Stata}
+\putimage{pexels-thisisengineering-3861943.jpg}
+
+\vskip16pt
+Survey Solutions API client for Stata is a software that facilitates the
+control of a Survey Solutions data server from Stata scripts.
+
+\vskip16pt
+\textbf{Requirements:}
+\begin{itemize}
+    \item \textbf{Stata 16.0} or newer.
+    \item \textbf{Python 3.8} or newer (installed and accessible from Stata).
+\end{itemize}
+
+\vskip16pt
+\textbf{Compatibility with The World Bank Survey Solutions:}
+\begin{itemize}
+  \item This software has been written with Survey Solutions v21.01.8 in mind,
+        which is the current version at the time of this writing.
+  \item Earlier versions may not implement all the functionality that is
+        required for it, please update the Survey Solutions server.
+  \item Future versions of Survey Solutions may change the behavior of the
+        quieries or the formats of responses. If you encounter any
+        incompatibility, please check the \href{https://docs.mysurvey.solutions/release_notes}{release notes} of Survey Solutions
+        and see if an update is available for this API client.
+\end{itemize}
+
+\vskip16pt
+\textbf{Where to get:}
+\begin{itemize}
+  \item \textit{Stata:} \href{https://www.stata.com}{https://www.stata.com}
+  \item \textit{Python:} \href{https://www.python.org/downloads/}{https://www.python.org/downloads/}
+  \item \textit{This API client:} in Stata command prompt type \statacmd{ssc install susoapi}
+  \item \textit{Survey Solutions server:} \href{https://mysurvey.solutions/download}{https://mysurvey.solutions/download}
+\end{itemize}
+
+
+\vskip16pt
+\textbf{Checking Python from Stata.}\par
+\vskip16pt
+When you type the following command in Stata:\par
+\vskip16pt
+\begin{lstlisting}
+python : import sys ; print(sys.version)
+\end{lstlisting}
+\vskip16pt
+you should receive a response indicating Python version. For example: \par
+\vskip16pt
+\textit{3.8.1 (tags/v3.8.1:1b293b6, Dec 18 2019, 23:11:46) [MSC v.1916 64 bit (AMD64)]}.\par
+\vskip16pt
+If you are getting an error, then your Python installation is unusable from Stata. Refer to the Stata manual/support on how to install and configure Python for integration with Stata.
+
+% todo: Add list of HTTP codes or a link to such a list.
+
+\vskip16pt
+\subsection{Create a new API client}
+\begin{lstlisting}
+.new server username password
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{server} - URL of the server, for example: \textquotedbl\textit{https://demo.mysurvey.solutions}\textquotedbl
+\item \option{username} - name of the API user account, for example, \textquotedbl\textit{WeeklyAPI}\textquotedbl
+\item \option{password} - API account password, for example, \textquotedbl\textit{VERY321secret}\textquotedbl
+\end{itemize}

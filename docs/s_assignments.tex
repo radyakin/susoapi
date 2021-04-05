@@ -1,0 +1,282 @@
+\section{Assignments}
+\putimage{pexels-pixabay-164686.jpg}
+
+\subsection{Get details of an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_getdetails assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+
+\subsection{Assign an assignment to a new responsible}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_assign assignmentid responsiblelogin
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{responsiblelogin} - account name of the new responsible, for example: \textit{"Maryna"}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5002} is returned if the \textit{responsiblelogin} is not specified.
+\end{itemize}
+
+
+
+\subsection{Archive an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_archive assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+
+
+\subsection{Unarchive an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_unarchive assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+
+\subsection{Close an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_close assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+
+
+\subsection{Change quantity for an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_changequantity assignmentid number
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{number} - new quantity for the assignment, for example: \textit{10}.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5002} is returned if the \textit{number} is not specified.
+\end{itemize}
+
+
+\subsection{Get quantity setting for an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_getquantitysettings assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{number} - new quantity for the assignment, for example: \textit{10}.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(can\_change\_quantity) - numeric 1=quantity can be changed or 0=quantity cannot be changed.
+    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+\end{compactitem}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+
+\subsection{Get audio audit status for an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_getaudio assignmentid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(record\_audio) - numeric 1=ON or 0=OFF.
+    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+\end{compactitem}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+\end{itemize}
+
+\subsection{Set audio audit status for an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_setaudio assignmentid value
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{value} - numeric value for the audio audit status of the assignment (0=OFF, any other value=ON), for example: \textit{1}.
+
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(record\_audio) - numeric 1=ON or 0=OFF.
+    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+\end{compactitem}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5002} is returned if the \textit{value} of audio audit is not specified.
+\end{itemize}
+
+\subsection{Get assignment's history}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_history assignmentid frame
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{framename} - (optional) frame name where to save the assignment history, for example: \textit{"history"}. If not specified, the history is saved to the current frame.
+
+\end{itemize}
+
+\structheader{Assignment history}
+
+\begin{compactitem}
+    \datafield{str32 utc\_date } (for example, "\textit{2020-10-05T15:33:30.317233Z}")
+    \datafield{str32 action } (for example, "\textit{Created}")
+    \datafield{str32 actor\_name } (for example, "\textit{ValeriaHQ}")
+    \datafield{strL additional\_data } (for example, "\textit{\{'Comment': None, 'Responsible': 'SergiyInt'\}}")
+\end{compactitem}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{-10404} is returned if the assignment with \textit{assignmentid} is not found on the server.
+\end{itemize}
+
+
+\subsection{Create an assignment}
+
+\begin{lstlisting}[style=CommandLineStyle]
+.assignments_create , responsible() qxguid() [qxversion() quantity()]
+             [email() password() webmode()]
+             [audio() comment() protected() data()]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+
+\item \option{responsible} - account name of a person designated responsible
+for the assignment, for example: \textit{SergiyInt}. NB: for web interviews the
+responsible must be a user in the interviewer role.
+
+\item \option{qxguid()} - GUID of the questionnaire.
+
+\item \option{qxversion()} - (optional) numeric version of the questionnaire
+      (as assigned when the questionnaire is imported to the HQ), for example:
+      \textit{2}. When the option is not specified version 1 is implied.
+
+\item \option{quantity()} - (optional) quantity of interviews requested in
+      this assignment, for example: \textit{12}. When the option is not
+      specified, quantity 1 is implied.
+
+\item \option{email()} - (optional) respondent's email for sending the
+      invitations and reminders for a web interview.
+
+\item \option{password()} - (optional) password for accessing the web interview
+      online.
+
+\item \option{webmode()} - (optional) whether the assignment should be
+      created in web mode. Specify 1 for web mode assignments, and 0 for regular
+      assignments. If the option is not specified, regular assignments will be
+      created.
+
+\item \option{audio()} - (optional) whether audio audit should be collected for
+      this assignment (1=on, 0=off). If the option is not specified, the audio
+      audit will not be collected.
+
+\item \option{comment()} - (optional) a comment to be recorded as an additional
+      instruction regarding this assignment to the person who is designated
+      responsible.
+
+\item \option{protected()} - (optional) a space-delimited list of variables to
+      be protected from modification by the interviewer (see the corresponding
+      article in the documentation for Survey Solutions). For example,
+      \textit{"memberscount plotslist"}. If the option is not specified, no
+      variables are protected.
+
+\item \option{data()} - (optional) output of the \textit{\textbf{.buildvars}}
+      method or manually constructed preloading data in the same format, for
+      example: \textit{"{"Variable":"age", "Answer":41}"}
+
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{7001} is returned if the \textit{password} option is
+    specified, but the assignment is created not in web mode (option webmode is
+    0).
+
+    \item Error \ecode{7002} is returned if the \textit{email} option is
+    specified, but the assignment is created not in web mode (option webmode is
+    0).
+
+    \item Error \ecode{7003} is returned if the \textit{quantity} option is
+    more than 1, but the assignment is created not in web mode (option webmode is
+    0).
+\end{itemize}

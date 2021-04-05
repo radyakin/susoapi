@@ -1,0 +1,194 @@
+\section{Users and user accounts}
+\putimage{pexels-fauxels-3183150.jpg}
+
+\subsection{Return information about the current user account}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_reflect
+\end{lstlisting}
+
+\textbf{This method has no parameters or options.}
+
+\savedres
+
+As a result of execution of this method, the following properties of the API-client are updated:
+
+\begin{compactitem}
+    \item .userid - GUID of the user account.
+    \item .userroles - roles that the account is having in the server, typically \textit{"APIUSER"} for API user accounts.
+    \item .userworkspaces - list of workspaces that this account has access to.
+\end{compactitem}
+
+
+\subsection{Create a user account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_create, role() username() password() [supervisor()]
+                     [ fullname() phonenumber() email() ]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+      \item \option{role} - role of the new account, can be one of "\textit{interviewer}", or "\textit{supervisor}", or "\textit{headquarters}".
+      \item \option{username} - user name of the new account (must be unique on the server).
+      \item \option{password} - password for the new account, must satisfy the password security requirements for the server.
+      \item \option{supervisor} - name of the supervisor for the new account. Must be specified for the interviewer accounts, may not be specified for any other accounts. Supervisor with this account must already exist on the server.
+     \item \option{fullname} - (optional) full name of the user of the new account.
+     \item \option{phonenumber} - (optional) phone number of the user of the new account.
+     \item \option{email} - (optional) email of the user of the new account.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(UserID) - GUID of the newly created user account
+\end{compactitem}
+
+\subsection{Get the details of a user account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_user guid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+    \item \option{guid} - GUID of the user.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(UserId) - account GUID as specified in the query
+    \item r(UserName) - account name corresponding to the specified GUID
+    \item r(Role) - account role in the system
+    \item r(FullName) - full name of the user (if specified)
+    \item r(Email) - contact email of the user (if specified)
+    \item r(PhoneNumber) - contact phone number of the user (if specified)
+    \item r(CreationDate) - date when the account was created
+    \item r(isArchived) - (1=archived; 0=not archived)
+    \item r(isLocked) - (1=locked; 0=not locked)
+\end{compactitem}
+
+\subsection{Get the details of a supervisor account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_supervisor guid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{guid} - GUID of the supervisor.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(UserName) - account name corresponding to the specified GUID
+    \item r(FullName) - full name of the user (if specified)
+    \item r(Email) - contact email of the user (if specified)
+    \item r(PhoneNumber) - contact phone number of the user (if specified)
+    \item r(CreationDate) - date when the account was created
+    \item r(isArchived) - (1=archived; 0=not archived)
+    \item r(isLocked) - (1=locked; 0=not locked)
+\end{compactitem}
+
+
+\subsection{Get the details of an interviewer account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_interviewer guid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{guid} - GUID of the interviewer.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(UserName) - account name corresponding to the specified GUID
+    \item r(SupervisorName) - account name of the supervisor of this interviewer
+    \item r(SupervisorId) - account GUID of the supervisor of this interviewer
+    \item r(FullName) - full name of the interviewer (if specified)
+    \item r(Email) - contact email of the interviwer (if specified)
+    \item r(PhoneNumber) - contact phone number of the interviewer (if specified)
+    \item r(CreationDate) - date when the account was created
+    \item r(isArchived) - (1=archived; 0=not archived)
+    \item r(isLocked) - (1=locked; 0=not locked)
+    \item r(isLockedBySupervisor) - (1=locked; 0=not locked)
+    \item r(isLockedByHeadquarters) - (1=locked; 0=not locked)
+\end{compactitem}
+
+\subsection{Get the list of the supervisor accounts on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_supervisors [frame]
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{frame} - (optional) frame name to save the list of supervisors. If not specified, the current frame will be used.
+\end{itemize}
+\textbf{Supervisors list frame data structure}
+
+\begin{compactitem}
+    \datafield{strL user\_name } (for example, "Valentina")
+    \datafield{str36 user\_id } (for example, "978d72ab-82b1-4c7b-a055-cf8922dde4e6")
+    \datafield{str40 creation\_date } (for example, "2020-10-05T15:33:30.317233Z")
+    \datafield{byte is\_locked } (1=locked, 0=not locked)
+\end{compactitem}
+
+\subsection{Get the list of interviewer accounts in a team}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_interviewers guid frame
+\end{lstlisting}
+Retrives the list of interviewer accounts in a team of a particular supervisor.
+
+\paramsheader
+\begin{itemize}
+  \item \option{guid} - GUID of the supervisor/team.
+  \item \option{frame} - (optional) name of the frame to be created for the list of the interviewers.
+\end{itemize}
+
+\textbf{Supervisors list frame data structure}
+
+\begin{compactitem}
+    \datafield{strL user\_name } (for example, "Natalia")
+    \datafield{str36 user\_id } (for example, "978d72ab-82b1-4c7b-a055-cf8922dde4e6")
+    \datafield{str40 creation\_date } (for example, "2020-10-05T15:33:30.317233Z")
+    \datafield{byte is\_locked } (1=locked, 0=not locked)
+\end{compactitem}
+
+
+\subsection{Archive a user account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_archive guid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+      \item \option{guid} - GUID of the user account on the server to be archived.
+\end{itemize}
+
+
+\subsection{Unarchive a user account on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_unarchive guid
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+      \item \option{guid} - GUID of the user account on the server to be unarchived.
+\end{itemize}
+
+
+\subsection{Obtain a detailed actions log for an interviewer account}
+\begin{lstlisting}[style=CommandLineStyle]
+.users_actionslog, user() [ framename() from() to() ]
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+      \item \option{user} - GUID of the interviewer account on the server, for which the detailed actions log is requested. For example, \textit{user(b361cc01-da5d-432e-b926-799f73c7e198)}.
+      \item \option{framename} - (optional) if specified, the detailed actions log will be placed in this new frame, otherwise the log will be placed into the current frame.
+      \item \option{from} - (optional), if specified restricts the detailed actions log to start from this date. Example: \textit{from(2019-01-13T14:48:58Z)}. NB: if option \textit{from()} is specified, then option \textit{to()} must also be specified.
+      \item \option{to} - (optional), if specified restricts the detailed actions log to end on this date. Example: \textit{to(2021-01-13T14:48:59Z)}. NB: if option \textit{to()} is specified, then option \textit{from()} must also be specified.
+\end{itemize}
+
+\textbf{Detailed actions log frame data structure}
+
+\begin{compactitem}
+    \datafield{str40 time }
+    \datafield{strL message }
+\end{compactitem}

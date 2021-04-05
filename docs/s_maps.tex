@@ -1,0 +1,80 @@
+\section{Maps}
+
+\putimage{pexels-andrew-neel-2859169.jpg}
+
+\subsection{Get list of maps and maps-to-user assignments}
+\begin{lstlisting}[style=CommandLineStyle]
+.maps_getmaps maps [users]
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{maps} - frame name for placing the list of maps currently on the server
+  \item \option{users} - (optional) frame name for placing the list of users-to-maps assignments.
+\end{itemize}
+
+\structheader{Maps}
+\begin{compactitem}
+  \datafield{string* filename }
+  \datafield{string* importdate }
+  \datafield{long size }
+  \datafield{long users }
+  \datafield{long wkid }
+  \datafield{double minscale }
+  \datafield{double maxscale }
+  \datafield{double xminval }
+  \datafield{double xmaxval }
+  \datafield{double yminval }
+  \datafield{double ymaxval }
+\end{compactitem}
+*NB: The exact storage types of the string variables depend on the content
+     length and may vary.
+
+\structheader{User-maps}
+\begin{compactitem}
+  \datafield{string* filename }
+  \datafield{string* username }
+\end{compactitem}
+*NB: The exact storage types of the string variables depend on the content
+     length and may vary.
+
+
+\subsection{Add an assignment of a map to a user.}
+\begin{lstlisting}[style=CommandLineStyle]
+.maps_addusertomap map user
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{map} - name of the map from the list of maps
+        currently on the server, for example, \textquotedbl
+        \textit{ukraine.tif}\textquotedbl
+  \item \option{user} - interviewer account name, for example
+        \textquotedbl SergiyInt\textquotedbl.
+\end{itemize}
+
+
+\subsection{Delete an assignment of a map from a user.}
+\begin{lstlisting}[style=CommandLineStyle]
+.maps_deleteuserfrommap map user
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{map} - name of the map from the list of maps currently on
+        the server, for example, \textquotedbl \textit{ukraine.tif}\textquotedbl
+  \item \option{user} - interviewer account name, for example \textquotedbl
+        SergiyInt\textquotedbl.
+\end{itemize}
+
+
+\subsection{Delete a map from the server.}
+\begin{lstlisting}[style=CommandLineStyle]
+.maps_deletemap map
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+  \item \option{map} - name of the map from the list of maps currently on
+  the server, for example, \textquotedbl \textit{ukraine.tif}\textquotedbl
+\end{itemize}
