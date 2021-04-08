@@ -1,12 +1,12 @@
 
-name: Compile Latex and Release PDF  
+name: Compile Latex and Release PDF
 
 
 on:
   push:
     tags:
       - '*.*.*'
-    
+
 jobs:
   build_latex:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: d${{ github.ref }}
+          tag_name: v${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
@@ -36,7 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./manual/susoapi.pdf
           asset_name: susoapi.pdf
           asset_content_type: pdf
