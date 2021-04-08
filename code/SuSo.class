@@ -1144,15 +1144,16 @@ def statistics_questionnaires():
   
   URL=f"{get_server_url()}/api/v1/statistics/questionnaires/"
   y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
-  print(y.json())
+  if (read_property("verbose")=="true"):
+    print(y.json())
   
   qxs=y.json()
   for q in qxs:
-        Data.addObs(1)
-        n=Data.getObsTotal()-1
-        Data.storeAt("id",n,q["Id"])
-        Data.storeAt("title",n,q["Title"])
-        Data.storeAt("version",n,q["Version"])  
+    Data.addObs(1)
+    n=Data.getObsTotal()-1
+    Data.storeAt("id",n,q["Id"])
+    Data.storeAt("title",n,q["Title"])
+    Data.storeAt("version",n,q["Version"])  
 
 end 
 
@@ -1167,9 +1168,9 @@ program define .new
     
     .inittime=`"`c(current_time)'"'
     .initdate=`"`c(current_date)'"'
-    
+
     if `"$SUSOAPIVERBOSE"' != "" {
-        .verbose=`'"$SUSOAPIVERBOSE"'
+        .verbose=`"$SUSOAPIVERBOSE"'
     }
     
     if (`"`inittime'"'!=`"`c(current_time)'"') {
@@ -1219,7 +1220,6 @@ program define .new
         }
     }
     
-    // display "The following workspaces are enabled: [`enabledws'] of [`.userworkspaces']."
     .workspace="`:word 1 of `enabledws''"
     // todo: stop if there are no active workspaces
     
@@ -1229,10 +1229,13 @@ program define .new
     
     // Now display the user identity
     .users_reflect
+    display as text "{break}"    
     display as text "User `.username':"
     display as text "- identity: " as result "`.userid'"
     display as text "- role: " as result "`.userroles'"
     display as text "- access to workspaces: " as result "`printable'"
+    display as text "{break}"
+    display as text "API client will use workspace {result:`.workspace'} unless you change it."
     
     display as text "{break}"
     display as text "Here are just some things you could do:"
