@@ -1139,6 +1139,20 @@ def assignments_create():
   print(result.status_code)
   
 
+def statistics_questionnaires():
+  # returns the list of questionnaires in the current workspace area
+  
+  URL=f"{get_server_url()}/api/v1/statistics/questionnaires/"
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+  print(y.json())
+  
+  qxs=y.json()
+  for q in qxs:
+        Data.addObs(1)
+        n=Data.getObsTotal()-1
+        Data.storeAt("id",n,q["Id"])
+        Data.storeAt("title",n,q["Title"])
+        Data.storeAt("version",n,q["Version"])  
 
 end 
 
@@ -2246,5 +2260,29 @@ program define .assignments_create, rclass
     python: assignments_create()       
         
 end
+
+
+program define statistics_questionnaires
+    version 16.0
+    syntax , [frame(string)]
+    
+    if !missing(`"`frame'"') {
+        capture frame drop `frame'
+        frame create `frame'
+        frame change `frame'
+    }
+    
+    clear
+    generate id=""
+    generate version=.
+    generate title=""
+    
+    label variable id "Questionnaire ID (GUID)"
+    label variable version "Questionnaire version"
+    label variable title "Questionnaire title"
+    python: statistics_questionnaires()    
+    
+end
+
 
 // END OF FILE

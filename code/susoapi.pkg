@@ -1,0 +1,19 @@
+v 3
+d 'susoapi': Survey Solutions API client for Stata 
+d by Sergiy Radyakin
+d
+d KW: Survey Solutions
+d KW: API client
+d KW: survey data collection
+d
+d Requires: Stata version 16.0 or newer
+d 
+d Distribution-Date: 20210406
+d
+d Author: Sergiy Radyakin, Senior Economist,
+d         Development Economics Data Group, The World Bank
+d
+f SuSoBase.class
+f SuSo.class
+f susoapi.pdf
+* END OF FILE
