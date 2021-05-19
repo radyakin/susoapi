@@ -21,7 +21,7 @@ class SuSo {
   string workspace = "primary" // default workspace that is always present and can't be removed
   
   string userid     // GUID, no dashes.
-  string userroles  // if empty - APIUSER is implied, space delimited if multiple. 
+  string userrole  // if empty - APIUSER is implied, space delimited if multiple. 
   string userworkspaces // space delimited list of workspaces to which the user has access, may be empty.
   string userworkspacese // a subset of .userworkspaces, which are enabled (may be empty).
   
@@ -158,7 +158,7 @@ def export():
         time.sleep(const_delay)
         y=requests.get(
           URL+str(jobid),
-          headers=ajheaders, 
+          headers=ajheader, 
           data={},
           auth=get_credentials())
         exportStatus=y.json()['ExportStatus']
@@ -411,7 +411,7 @@ def users_user(guid) :
   Macro.setGlobal("r(UserName)"    , r["UserName"])
   Macro.setGlobal("r(CreationDate)", r["CreationDate"])
   Macro.setGlobal("r(UserId)", r["UserId"])
-  Macro.setGlobal("r(Role)" , r["Roles"][0])
+  Macro.setGlobal("r(Role)" , r["Role"])
   
   # // these are optional
   if "FullName" in r:
@@ -557,7 +557,7 @@ def interviews_hqunapprove(guid, comment):
     URL=f"{get_server_url()}/api/v1/interviews/{guid}/hqunapprove?comment={requests.utils.quote(comment)}"
     response=servepatch(URL)
 
-def interviews_approve(guid, comment):
+def interviews_hqapprove(guid, comment):
     # // HQ-approves interview
     URL=f"{get_server_url()}/api/v1/interviews/{guid}/hqapprove?comment={requests.utils.quote(comment)}"
     response=servepatch(URL)
@@ -833,18 +833,17 @@ def users_reflect(URL):
       query viewer {
         viewer {
           id,
-          roles,
+          role,
           workspaces
         }
       }
     """
-
     result = run_query(URL, query) # Execute the query
     Macro.setLocal("userid",result['data']['viewer']['id'])
-    roles=' '.join(map(str, result['data']['viewer']['roles']))
-    if roles=="":
-      roles="APIUSER"
-    Macro.setLocal("userroles",roles)
+    role=' '.join(map(str, result['data']['viewer']['role']))
+    if role=="":
+      role="APIUSER"
+    Macro.setLocal("userrole",role)
     Macro.setLocal("userworkspaces",' '.join(map(str, result['data']['viewer']['workspaces'])))
 
 def maps_getmaps(URL, fm, fu):
@@ -1135,8 +1134,10 @@ def assignments_create():
   URL=f"{get_server_url()}/api/v1/assignments"
   qry=Macro.getLocal("qry")
   result=requests.post(URL, headers=ajpheader, data=qry, auth=get_credentials())
-  print(result)
-  print(result.status_code)
+  if (read_property("verbose")=="true"):
+    print(result)
+    print(result.status_code)
+  # // successful creation 200 for <21.05 and 201 for 21.05+  
   
 
 def statistics_questionnaires():
@@ -1232,7 +1233,7 @@ program define .new
     display as text "{break}"    
     display as text "User `.username':"
     display as text "- identity: " as result "`.userid'"
-    display as text "- role: " as result "`.userroles'"
+    display as text "- role: " as result "`.userrole'"
     display as text "- access to workspaces: " as result "`printable'"
     display as text "{break}"
     display as text "API client will use workspace {result:`.workspace'} unless you change it."
@@ -1915,8 +1916,9 @@ end
 program define .users_reflect
     // Get properties of the current user
     version 16.0
+
     python: users_reflect("`.graphql'")
-    .userroles="`userroles'"
+    .userrole="`userrole'"
     .userworkspaces="`userworkspaces'"
     .userid="`userid'"
     
