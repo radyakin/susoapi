@@ -840,7 +840,7 @@ def users_reflect(URL):
     """
     result = run_query(URL, query) # Execute the query
     Macro.setLocal("userid",result['data']['viewer']['id'])
-    role=' '.join(map(str, result['data']['viewer']['role']))
+    role=result['data']['viewer']['role']
     if role=="":
       role="APIUSER"
     Macro.setLocal("userrole",role)
