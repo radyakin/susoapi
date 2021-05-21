@@ -1406,7 +1406,6 @@ program define .users_create
     }
     
     local qry `"{ "Role": "`role'", "UserName": "`username'", "FullName": "`fullname'","PhoneNumber": "`phonenumber'"`mailcontact',"Password": "`password'","Supervisor": "`supervisor'" }"'
-    display `"`qry'"'
     
     python: users_create()
     if missing(r(UserID)) {
@@ -1819,6 +1818,11 @@ program define .assignments_changequantity
     if (missing(`"`num'"')) {
         display as error "Error! Must specify a new number of interviews in an assignment."
         exit 5002
+    }
+    
+    if (!inrange(`num',-1,1000)) | (`num'!=floor(`num')) {
+    	display as error "Error! Invalid new quantity value: `num'."
+        exit 5003
     }
     
     python: assignments_changequantity(`assignmentid', `num')
