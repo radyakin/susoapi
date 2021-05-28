@@ -9,12 +9,44 @@
 
 \paramsheader
 \begin{itemize}
-\item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example: \textit{1007}.
 \end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(CreatedAtUtc) - timestamp (date and time) of the creation of this
+    assignment (in UTC), for example: \textit{"2021-05-17T14:41:46.824627Z"}.
+    \item r(UpdatedAtUtc) - timestamp (date and time) of the last update (in
+    UTC), for example: \textit{"2021-05-27T20:45:39.778723Z"}.
+    \item r(QuestionnaireId)  - identity of the questionnaire on which this
+    assignment is based. Identity is the questionnaire GUID and version
+    separated with the \$ sign, for example: \newline
+    \textit{"0434573c67b34d93b1f0799fb042f9e6\$1"}.
+    \item r(ResponsibleName) - login name of the current responsible user,
+    for example: \textit{"Natalia"}.
+    \item r(ResponsibleId) - GUID of the current responsible user, for example:
+    \textit{"71dc5a0f-6557-4945-9b86-0197699ee475"}.
+\end{compactitem}
+
+\vskip16pt
+Additionally, for each identifying question, \#=1,2,...:
+\begin{compactitem}
+    \item r(id\_guid\#) - internally assigned GUID of the question,
+    for example: \newline \textit{"c03979a9157304fcfa9bc1d3988433d7"}.
+    \item r(id\_variable\#) - variable name for the question,
+    for example: \textit{"province"}.
+    \item r(id\_answer\#) - recorded answer to the identifying question,
+    for example: \textit{"Northern province"}.
+\end{compactitem}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
+    \item Error \ecode{-10404} is returned if an assignment with \textit{assignmentid} is not found on the server.
 \end{itemize}
 
 
@@ -34,6 +66,9 @@
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{responsiblelogin} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -52,6 +87,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -70,6 +108,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -87,6 +128,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -108,6 +152,9 @@
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{number} is not specified.
     \item Error \ecode{5003} is returned if the \textit{number} is invalid (must be an integer, more than 0, 0, or -1).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -132,6 +179,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 
@@ -155,6 +205,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 \subsection{Set audio audit status for an assignment}
@@ -180,6 +233,9 @@
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{value} of audio audit is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 \subsection{Get assignment's history}
@@ -207,6 +263,9 @@
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).    
     \item Error \ecode{-10404} is returned if the assignment with \textit{assignmentid} is not found on the server.
 \end{itemize}
 

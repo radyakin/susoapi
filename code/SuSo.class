@@ -342,12 +342,23 @@ def users_supervisor(guid) :
   URL=f"{get_server_url()}/api/v1/supervisors/{guid}"
   response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   r=response.json()
+  if (read_property("verbose")=="true"):
+    print(r)
   
   Macro.setGlobal("r(UserName)", r["UserName"])
-  Macro.setGlobal("r(FullName)", r["FullName"])
-  Macro.setGlobal("r(Email)", r["Email"])
-  Macro.setGlobal("r(PhoneNumber)", r["PhoneNumber"])
+
   Macro.setGlobal("r(CreationDate)", r["CreationDate"])
+  
+  # // these are optional
+  if "FullName" in r:
+    Macro.setGlobal("r(FullName)"    , r["FullName"])
+  
+  if "Email" in r:
+    Macro.setGlobal("r(Email)"       , r["Email"])
+  
+  if "PhoneNumber" in r:
+    Macro.setGlobal("r(PhoneNumber)" , r["PhoneNumber"])
+  
   a=0
   if r["IsArchived"]:
     a=1
@@ -788,6 +799,14 @@ def assignments_getdetails(assignmentid):
     # // Get assignment details
     URL=f"{get_server_url()}/api/v1/assignments/{assignmentid}"
     response=serveget(URL)
+    # // success: 200
+    # // assignment not found: 404
+    if (response.status_code!=200):
+      Scalar.setValue("r(status_code)", response.status_code)
+      return
+    
+    if (read_property("verbose")=="true"):
+      print(response)
     r=response.json()
     rsavejson(r)
     identif=r["IdentifyingData"]
@@ -1728,6 +1747,31 @@ program define .interviews_varcomment
      // Undocumented server response 406 if rosterVector is misspecified
 end
 
+
+program define check_assignment_id
+    version 16.0
+    args id
+    // must be numeric
+    capture confirm number `id'
+    if _rc {
+    	display as error "Error! Assignment ID is not a number: `id'."
+        error 5101
+    }
+    
+    // must be positive
+    if (`id'<1) {
+    	display as error "Error! Assignment ID must be 1 or more, but received: `id'."
+        error 5102
+    }
+    
+    // must be integer
+    if (`id'!=floor(`id')) {
+    	display as error "Error! Assignment ID must be integer, but received: `id'."
+        error 5103
+    }
+end
+
+
 program define .assignments_close
     // Closes an existing assignment by assignment ID
     version 16.0
@@ -1736,6 +1780,7 @@ program define .assignments_close
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
     
     python: assignments_close(`assignmentid')
 end
@@ -1748,6 +1793,7 @@ program define .assignments_getquantitysettings
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
     
     python: assignments_getquantitysettings(`assignmentid')
 end
@@ -1760,6 +1806,7 @@ program define .assignments_archive
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
     
     python: assignments_archive(`assignmentid')
 end
@@ -1772,6 +1819,7 @@ program define .assignments_unarchive
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
     
     python: assignments_unarchive(`assignmentid')
 end
@@ -1784,6 +1832,8 @@ program define .assignments_getaudio
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
+    
     return clear
     python: assignments_getaudio(`assignmentid')
 end
@@ -1802,6 +1852,8 @@ program define .assignments_setaudio
         display as error "Error! Value (numeric) for audio audit is required. Use 1 for enabled, 0 for disabled."
         exit 5002
     }
+    check_assignment_id `assignmentid'
+    
     local audio=(`audio'!=0)
     python: assignments_setaudio(`assignmentid', `audio')
 end
@@ -1825,6 +1877,8 @@ program define .assignments_changequantity
         exit 5003
     }
     
+    check_assignment_id `assignmentid'
+    
     python: assignments_changequantity(`assignmentid', `num')
 end
 
@@ -1839,6 +1893,8 @@ program define .assignments_history
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    
+    check_assignment_id `assignmentid'
     
     if !missing(`"`framename'"') {
       frame create `framename'
@@ -1868,6 +1924,8 @@ program define .assignments_assign
         display as error "Error! Responsible person's login name is required."
         exit 5002
     }
+    
+    check_assignment_id `assignmentid'
 
     python: assignments_setresponsible(`assignmentid', "`responsiblelogin'")
 end
@@ -1876,12 +1934,18 @@ program define .assignments_getdetails
     // # Returns assignment details
     version 16.0
     args assignmentid
-    //todo: further confirm that the assignment ID is a number.
     if (missing(`"`assignmentid'"')) {
         display as error "Error! Assignment ID (numeric) is required."
         exit 5001
     }
+    check_assignment_id `assignmentid'
+    
     python: assignments_getdetails(`assignmentid')
+    local code = `r(status_code)'
+    if (`code'!=200) {
+    	display as error "Error! The server responded with: " `code'
+        error `=-(10000+`code')'
+    }
 end
 
 program define .maps_getmaps
