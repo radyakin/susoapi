@@ -9,23 +9,25 @@ class SuSo {
   
   string wrapperver="1.0"
   
-  string initdate
-  string inittime
-  string versionstr
+  string initdate          // e.g. " 6 Aug 2021"
+  string inittime          // e.g. "12:32:54"
+  string versionstr        // e.g.  "21.06.2 (build 31490)"
+  string susoversion       // "21.06.2"
+  double susoversionmajor  // e.g. 21.06
   
-  string server
-  string username
-  string password
+  string server            // e.g. "https://demo.mysurvey.solutions"
+  string username          // actual user name
+  string password          // actual password in clear text
   
   // workspace for API queries
   string workspace = "primary" // default workspace that is always present and can't be removed
   
-  string userid     // GUID, no dashes.
+  string userid            // GUID, no dashes.
   string userrole  // if empty - APIUSER is implied, space delimited if multiple. 
   string userworkspaces // space delimited list of workspaces to which the user has access, may be empty.
   string userworkspacese // a subset of .userworkspaces, which are enabled (may be empty).
   
-  string verbose="false"
+  string verbose="false"   // for debugging purposes
 }, inherit(SuSoBase)
 
 python:
@@ -110,6 +112,12 @@ def get_workspace():
     return read_property("workspace")
   
 def get_server_url():
+    # // For versions prior to introduction of workspaces no need 
+    # // to add workspaces to URL.
+    v=read_property("susoversionmajor")
+    
+    if (float(v)<21.0):
+      return f"{get_server()}"
     return f"{get_server()}/{get_workspace()}" 
 
 def get_credentials():
@@ -259,7 +267,7 @@ def qx_interviews(qguid, qversion):
   
   URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/interviews"
   y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
-  
+
   totalcount=y.json()["TotalCount"]
   if (read_property("verbose")=="true"):
     print(totalcount, " interviews of this questionnaire on the server")
@@ -1156,8 +1164,12 @@ def assignments_create():
   if (read_property("verbose")=="true"):
     print(result)
     print(result.status_code)
-  # // successful creation 200 for <21.05 and 201 for 21.05+  
+  # // successful creation 200 for <21.05 and 201 for 21.05+ 
   
+  Macro.setLocal("status_code",str(result.status_code))
+  if ((result.status_code!=200) and (result.status_code!=201)):
+    SFIToolkit.errprintln("Server responded: "+str(result.status_code))
+    return
 
 def statistics_questionnaires():
   # returns the list of questionnaires in the current workspace area
@@ -1183,6 +1195,43 @@ end
 
 // =============================================================================
 
+program define setversion
+    version 16.0
+    
+    syntax , v(string)
+    
+    if (`"`v'"'=="") {
+    	display as error "Error! The version cannot be empty!"
+        error 197
+    }
+    
+    // RECORD FULL VERSION AS STRING (e.g. "21.05.4 (build 30177)" )
+    .versionstr=`"`v'"'
+    
+    // RECORD THE SHORT VERSION AS STRING (e.g. "21.05.4")
+    local p=strpos(`"`v'"'," ")
+    local r=`"`=substr(`"`v'"',1,`p'-1)'"'
+    .susoversion=`"`r'"'
+    
+    // RECORD THE MAJOR VERSION AS A FLOATING POINT NUMBER
+    local v `"`r'"'
+
+    if strpos(`"`v'"',".")==0 {
+        local r=`"`v'"'  // result
+    }
+    else {
+        if strpos(`"`v'"',".")==1+strlen(`"`v'"')-strpos(strreverse(`"`v'"'),".") local r=`"`v'"' // result
+        else {
+            local r=strreverse(`"`v'"')
+            local v=strreverse(substr(`"`r'"', 1+strpos(`"`r'"',"."),.))
+            local r=`"`v'"' // result
+        }
+    }
+
+    confirm number `r'
+    .susoversionmajor=`r'
+end
+
 
 program define .new
     
@@ -1201,11 +1250,12 @@ program define .new
     if `"`0'"' != "" {
         .set `0'
     }
-    
+ 
     // Get the server version (not from API)
     tempfile tmp
     copy `"`.server'/.version"' `"`tmp'"'
-    .versionstr=fileread(`"`tmp'"')
+    local v=fileread(`"`tmp'"')
+    .setversion, v(`"`v'"')
     erase `"`tmp'"'
 
     // display greeting
@@ -1227,25 +1277,31 @@ program define .new
     local printable ""
     local enabledws ""
     .users_reflect
-    quietly foreach w in `.userworkspaces' {
-        quietly ds // needed here, do not remove
-        .workspace="`w'"
-        capture noisily .workspaces_getdetails `w'
-        if (!missing(`"`r(Name)'"')) {
-          local enabledws=strtrim(`"`enabledws' `w'"')
-          local printable=strtrim(`"`printable' `w'"')
+    
+    if (`'"`.userworkspaces'"'!="")  {
+        quietly foreach w in `.userworkspaces' {
+            quietly ds // needed here, do not remove
+            .workspace="`w'"
+            capture noisily .workspaces_getdetails `w'
+            if (!missing(`"`r(Name)'"')) {
+              local enabledws=strtrim(`"`enabledws' `w'"')
+              local printable=strtrim(`"`printable' `w'"')
+            }
+            else {
+              local printable=strtrim(`"`printable' `w'*"')
+            }
         }
-        else {
-          local printable=strtrim(`"`printable' `w'*"')
-        }
+        .workspace="`:word 1 of `enabledws''"
+        // todo: stop if there are no active workspaces
+        // Now check the server for responding
+        python: Macro.setLocal("c",str(check()))
+        if (`c' < 0) exit 3333
+    }
+    else {
+    	.workspace=""
     }
     
-    .workspace="`:word 1 of `enabledws''"
-    // todo: stop if there are no active workspaces
-    
-    // Now check the server for responding
-    python: Macro.setLocal("c",str(check()))
-    if (`c' < 0) exit 3333
+
     
     // Now display the user identity
     .users_reflect
@@ -2331,6 +2387,10 @@ program define .assignments_create, rclass
 
     display `"`macval(qry)'"'
     python: assignments_create()       
+    
+    if (!inlist(r(result_code),200,201)) {
+    	error 7099
+    }
         
 end
 
@@ -2355,6 +2415,13 @@ program define statistics_questionnaires
     label variable title "Questionnaire title"
     python: statistics_questionnaires()    
     
+end
+
+
+program define read_property
+    // for debugging only
+    version 16.0
+    python: read_property("$prop")
 end
 
 
