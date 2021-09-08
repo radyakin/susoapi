@@ -10,7 +10,8 @@ control of a Survey Solutions data server from Stata scripts.
 
 \begin{itemize}
     \item \textbf{Stata 16.0} or newer.
-    \item \textbf{Python 3.8} or newer (installed and accessible from Stata).
+    \item \textbf{Python 3.8} or newer (installed, configured and accessible from Stata), additional information here: \href{https://www.stata.com/python/pystata/install.html}{https://www.stata.com/python/pystata/install.html}
+    \item \textbf{Python modules} (see Dependencies below).
 \end{itemize}
 
 \vskip16pt
@@ -61,6 +62,10 @@ If you are getting an error, then your Python installation is unusable from Stat
     \includegraphics[width=70mm]{images/generated/susoapi-dependencies.png}
 \end{center}
 
+Additional module \textbf{requests} needs to be installed with the following
+command: \texttt{pip install requests}. (While being installed it pulls its
+own dependencies). Additional information here:
+\href{https://pypi.org/project/requests/}{https://pypi.org/project/requests/}.
 
 \vskip16pt
 \subsection{Create a new API client}
