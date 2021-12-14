@@ -34,6 +34,7 @@ python:
 import numbers
 import time
 import requests
+from importlib.metadata import version
 from sfi import Macro, Data, Scalar, SFIToolkit
 
 # // Python globals:
@@ -430,7 +431,14 @@ def users_user(guid) :
   Macro.setGlobal("r(UserName)"    , r["UserName"])
   Macro.setGlobal("r(CreationDate)", r["CreationDate"])
   Macro.setGlobal("r(UserId)", r["UserId"])
-  Macro.setGlobal("r(Role)" , r["Role"])
+  
+  v=read_property("susoversionmajor")
+  if (float(v)<21.05):
+    # // in older versions returned as an array with no more than 1 element
+	Macro.setGlobal("r(Role)" , r["Roles"][0])
+  else:
+    # // in modern versions returned as a scalar element
+    Macro.setGlobal("r(Role)" , r["Role"])
   
   # // these are optional
   if "FullName" in r:
@@ -702,23 +710,20 @@ def interviews_varcomment(interviewguid, varname, rosteraddress, comment):
     # // Add comment to question in interview
     URL=f"{get_server_url()}/api/v1/interviews/{interviewguid}/comment-by-variable/{varname}?{rosteraddress}comment={requests.utils.quote(comment)}"
     response=servepostdata(URL, None)
-        
 
-        
-        
 def assignments_close(assignmentid):
     response = requests.post(f'{get_server_url()}/api/v1/assignments/{assignmentid}/close', data={}, auth=get_credentials())
     if (read_property("verbose")=="true"): 
       print(response.status_code)
     # // todo: define error handling
     Macro.setScalar('r(status_code)', str(response.status_code))
-    
+
 def assignments_getquantitysettings(assignmentid):
     response = requests.get(f'{get_server_url()}/api/v1/assignments/{assignmentid}/assignmentQuantitySettings', data={}, auth=get_credentials())
     Scalar.setValue('r(status_code)', response.status_code)
     if (response.status_code==200):
       Scalar.setValue('r(can_change_quantity)',response.json()['CanChangeQuantity'])
-    
+
 def assignments_archive(assignmentid):
     response = requests.patch(f"{get_server_url()}/api/v1/assignments/{assignmentid}/archive", data={}, auth=get_credentials())
     Scalar.setValue("r(status_code)", response.status_code)
@@ -726,7 +731,7 @@ def assignments_archive(assignmentid):
 def assignments_unarchive(assignmentid):
     response = requests.patch(f"{get_server_url()}/api/v1/assignments/{assignmentid}/unarchive", data={}, auth=get_credentials())
     Scalar.setValue("r(status_code)", response.status_code)
-    
+
 def assignments_getaudio(assignmentid):
     response = requests.get(f"{get_server_url()}/api/v1/assignments/{assignmentid}/recordAudio", data={}, auth=get_credentials())
     Scalar.setValue("r(status_code)", response.status_code)
@@ -1187,6 +1192,12 @@ def statistics_questionnaires():
     Data.storeAt("title",n,q["Title"])
     Data.storeAt("version",n,q["Version"])  
 
+def python_dependencies():
+	dependencies=["requests", "certifi", "chardet", "idna", "urllib3"]
+	for module in dependencies:
+	 ver=version(module)
+	 print("  - " + module + ": " + ver)
+	
 end 
 
 // === END OF PYTHON DEFINITIONS ===
@@ -1238,6 +1249,26 @@ program define .new
     .inittime=`"`c(current_time)'"'
     .initdate=`"`c(current_date)'"'
 
+    // display greeting
+    display as text "{break}"    
+    display as text `"Survey Solutions API wrapper for Stata version `.wrapperver' {stata "adoupdate susoapi":(check for updates)}"'
+    display as result `"Running in "'
+    display as result `"- Stata `c(version)' `c(os)' `c(osdtl)'"'
+    display as result `"- Python "' _continue
+    python : import sys ; print(sys.version)
+	display as result "- Python modules:"
+	python: python_dependencies()
+	
+	display "Health check:"
+	
+	foreach srcfile in "suso.class" "susobase.class" {
+		quietly findfile "`srcfile'"
+		quietly checksum `"`r(fn)'"'
+		display as text "- `srcfile'" _col(20) ///
+		        as result %10.0gc r(filelen) _col(32) ///
+				as result %20.0gc `r(checksum)'
+	}
+		
     if `"$SUSOAPIVERBOSE"' != "" {
         .verbose=`"$SUSOAPIVERBOSE"'
     }
@@ -1258,18 +1289,13 @@ program define .new
     .setversion, v(`"`v'"')
     erase `"`tmp'"'
 
-    // display greeting
-    display as text "{break}"    
-    display as text `"Survey Solutions API wrapper for Stata version `.wrapperver' {stata "adoupdate susoapi":(check for updates)}"'
-    display as result `"Running in "'
-    display as result `"- Stata `c(version)' `c(os)' `c(osdtl)'"'
-    display as result `"- Python "' _continue
-    python : import sys ; print(sys.version)
-
     display as text "{break}"
     display as text `"Survey Solutions data server"'
     display as text `"{browse "`.server'":`.server'}"'
-    display as text `"`.versionstr'"'
+    display as text `"Reported version descriptor: "' as result `"`.versionstr'"'
+	display as text `"Version: "' as result `"`.susoversion'"'
+	display as text `"Major version: "' as result `"`.susoversionmajor'"' ///
+	        as text `" {browse "https://docs.mysurvey.solutions/release-notes/version-`=subinstr("`.susoversionmajor'",".","-",.)'/":"Release notes"}"'
 
     quietly pwf
     local cframe `"`=r(currentframe)'"'
@@ -1278,7 +1304,7 @@ program define .new
     local enabledws ""
     .users_reflect
     
-    if (`'"`.userworkspaces'"'!="")  {
+    if (`"`.userworkspaces'"'!="")  {
         quietly foreach w in `.userworkspaces' {
             quietly ds // needed here, do not remove
             .workspace="`w'"
@@ -1300,9 +1326,7 @@ program define .new
     else {
     	.workspace=""
     }
-    
-
-    
+        
     // Now display the user identity
     .users_reflect
     display as text "{break}"    
