@@ -75,12 +75,20 @@ own dependencies). Additional information here:
 \vskip16pt
 \subsection{Create a new API client}
 \begin{lstlisting}
-.new server username password
+.new server username password [workspace]
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
 \item \option{server} - URL of the server, for example: \textquotedbl\textit{https://demo.mysurvey.solutions}\textquotedbl
-\item \option{username} - name of the API user account, for example, \textquotedbl\textit{WeeklyAPI}\textquotedbl
-\item \option{password} - API account password, for example, \textquotedbl\textit{VERY321secret}\textquotedbl
+\item \option{username} - name of the API user account, for example: \textquotedbl\textit{WeeklyAPI}\textquotedbl
+\item \option{password} - API account password, for example: \textquotedbl\textit{VERY321secret}\textquotedbl
+\item \option{workspace} - workspace name, for example: \textquotedbl\textit{Census}\textquotedbl. Workspace name is optional, if not specified, the default workspace is assumed.
+\end{itemize}
+
+\subsection{Token-based authentication}
+Token-based authentication has been introduced in version 22.02 of Survey Solutions. Users wishing to utilize token-based authentication should follow the same instructions as above, with the following differences:
+\begin{itemize}
+  \item use specifically \textquotedbl *\textquotedbl \hspace{0.125cm} for the user name;
+  \item use the token for the password.
 \end{itemize}
