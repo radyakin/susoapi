@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.22"
+  string wrapperver="1.30"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -34,6 +34,8 @@ python:
 import numbers
 import time
 import requests
+import json
+from requests.auth import HTTPBasicAuth
 from importlib.metadata import version
 from sfi import Macro, Data, Scalar, SFIToolkit
 
@@ -861,10 +863,9 @@ def graphql_qry():
     url=Macro.getLocal("url")
     run_query(url, qry)
 
-def run_query(URL, query):
-    request = requests.post(URL, json={'query': query}, auth=get_credentials())
-    if request.status_code == 200:
-        result=request.json()
+def graphql_print_errors(r, q):
+    if r.status_code == 200:
+        result=r.json()
         if ('errors' in result):
           SFIToolkit.errprintln("Query was completed with error(s):")
           z=1
@@ -874,8 +875,15 @@ def run_query(URL, query):
           raise Exception("Query was completed with an error!")
         return result
     else:
-        raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
+        raise Exception("Query failed to run by returning code of {}. {}".format(r.status_code, q))
 
+def run_query(URL, query):
+    request = requests.post(URL, json={'query': query}, auth=get_credentials())
+    return(graphql_print_errors(request, query))
+
+def run_query_files(URL, data, files):
+    result = requests.post(URL, data=data, files=files, auth=get_credentials())
+    return(graphql_print_errors(result, ""))
 
 def users_reflect(URL):
 
@@ -994,6 +1002,34 @@ def maps_deletemap(URL, map, workspace):
         }
       }""" % (map, workspace)
     result = run_query(URL, query) # Execute the query
+
+def maps_uploadmaps(URL, mapsfile):
+
+        files = {"file": ("maps.zip", open(mapsfile, 'rb'), 'application/zip')}
+
+        operations = {
+            "query": 'mutation HeadquartersMutation('+'$'+'file: Upload!) {uploadMap(file: '+'$'+'file) {fileName, importDateUtc}}',
+            "variables": {"file": None},
+        }
+
+        data = {
+            "operations": json.dumps(operations),
+            "map": '{ "file": ["variables.file"] }',
+        }
+        
+        r=run_query_files(URL, data, files) # Execute the query
+        
+        # // fill out the frame with results
+        maps=r["data"]["uploadMap"]
+        for m in maps:
+            if (Macro.getLocal("frame")!=""):
+                Data.addObs(1)
+                n=Data.getObsTotal()-1
+                Data.storeAt("filename", n, m["fileName"])
+                Data.storeAt("importdateutc", n, m["importDateUtc"])
+            print(m["fileName"], m["importDateUtc"])  # // {'fileName': 'gadm36_UKR_0.shp', 'importDateUtc': '2022-06-11T08:41:38.905Z'}
+        Macro.setLocal("nMapsUploaded",str(len(maps)))
+
 
 def interview_properties(URL, workspace, interviewKey):
     query="""
@@ -1237,6 +1273,8 @@ program define setversion
     // RECORD FULL VERSION AS STRING (e.g. "21.05.4 (build 30177)" )
     .versionstr=`"`v'"'
 
+    .version_normalize, v("`v'")
+    local v=r(version)
     // RECORD THE SHORT VERSION AS STRING (e.g. "21.05.4")
     local p=strpos(`"`v'"'," ")
     local r=`"`=substr(`"`v'"',1,`p'-1)'"'
@@ -2077,6 +2115,33 @@ program define .maps_getmaps
     }
 
     python: maps_getmaps("`.graphql'","`maps'","`users'")
+end
+
+program define .maps_uploadmaps, rclass
+    // Upload a single or multiple maps to the server
+    version 16.0
+
+    syntax , mapsfile(string) [frame(string)]
+    // Parameters:
+    //  mapsfile = name of the zip-archive
+    //  frame = name of the frame to put results of uploading
+
+    if (`.susoversionmajor'<22.06) {
+      display as error "The server is v`.susoversionmajor', which does not support maps uploading."
+      exit 5001
+    }
+
+    if (`"`frame'"'!="") {
+      frame create `frame'
+      frame change `frame'
+      generate strL  filename=""
+      generate str24 importdateutc=""
+      label variable filename "Map file name"
+      label variable importdateutc "Timestamp of map file import in UTC timezone"
+    }
+
+    python: maps_uploadmaps("`.graphql'", "`mapsfile'")
+    return scalar nMapsUploaded=`nMapsUploaded'
 end
 
 program define .users_reflect

@@ -2,6 +2,44 @@
 
 \putimage{pexels-andrew-neel-2859169.jpg}
 
+\subsection{Upload a map to the server.}
+\begin{lstlisting}[style=CommandLineStyle]
+.maps_uploadmaps , mapsfile(string) frame(string)
+\end{lstlisting}
+
+Call this API endpoint to upload a map to the server. The map must then be
+assigned to one or more interviewers by calling the \textbf{.maps\_addusertomap}
+endpoint. The zip archive containing the maps may include one or multiple maps,
+including maps of different types (such as maps in .tpk, .mmpk, .tiff, etc formats).
+
+NB: use the forward slash '\slash' rather than backward slash '\textbackslash' for
+separating the folders in the path to file in the \textit{mapsfile} parameter.
+
+\paramsheader
+\begin{itemize}
+  \item \option{mapsfile} - name of the zip archive containing one or multiple
+        map files to be uploaded to the server, for example, \textquotedbl
+        \textit{newmaps.zip}\textquotedbl, if the file is not in the current
+        directory, include the full path to the file, for example, \textquotedbl
+        \textit{C:/data/gis/maps/newmaps.zip}\textquotedbl;
+  \item \option{frame} - name of a new frame that will be created to contain
+        information about the individual map files that were uploaded, for
+        example \textquotedbl \textit{loadedmaps}\textquotedbl.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5001} is returned if the server does not support
+    maps uploading.
+\end{itemize}
+
+\savedres
+\begin{compactitem}
+    \item r(nMapsUploaded) - number of successfully uploaded maps.
+\end{compactitem}
+
+
+
 \subsection{Get list of maps and maps-to-user assignments}
 \begin{lstlisting}[style=CommandLineStyle]
 .maps_getmaps maps [users]
