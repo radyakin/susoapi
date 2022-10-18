@@ -92,3 +92,15 @@ Token-based authentication has been introduced in version 22.02 of Survey Soluti
   \item use specifically \textquotedbl *\textquotedbl \hspace{0.125cm} for the user name;
   \item use the token for the password.
 \end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{5100} is returned if there is an error in establishing a secure connection to the server. Typically the code is accompanied with the message: \textit{``PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target''}.
+\end{itemize}
+
+NB: If you don't specify a workspace, the default workspace is assumed (with identifier "primary"). The client will only be created if the user with the specified credentials actually has access to this workspace. If not, make sure you specify an appropriate workspace ID in the constructor.
+
+Workspace may be switched dynamically already after the client has been created, by assigning:
+\begin{lstlisting}
+.s.workspace="census"
+\end{lstlisting}

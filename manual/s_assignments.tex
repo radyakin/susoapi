@@ -265,7 +265,7 @@ Additionally, for each identifying question, \#=1,2,...:
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
-    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).    
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
     \item Error \ecode{-10404} is returned if the assignment with \textit{assignmentid} is not found on the server.
 \end{itemize}
 
@@ -322,9 +322,43 @@ responsible must be a user in the interviewer role.
 
 \item \option{data()} - (optional) output of the \textit{\textbf{.buildvars}}
       method or manually constructed preloading data in the same format, for
-      example: \textit{"{"Variable":"age", "Answer":41}"}
+      example:
+      \begin{lstlisting}[style=CommandLineStyle]
+        `"{"Variable":"age", "Answer":41}"'
+      \end{lstlisting}
 
 \end{itemize}
+
+
+NB: Remember to use Stata's compound double quotes to envelop the content in
+the \textit{data()} option since it contains quotes of its own:
+
+\begin{lstlisting}[style=CommandLineStyle]
+
+local d = `"{"Variable":"region", "Answer":5}, "' + ///
+  `"{"Variable":"address", "Answer":"1234 Test St., My City, USA"}"'
+
+.s.assignments_create , ... data (`"`d'"')
+
+\end{lstlisting}
+
+
+\savedres
+\begin{compactitem}
+    \item r(status\_code) - numeric status code for the HTTP request corresponding to this query, for example \textit{201}; Successful completion is indicated by code 200 or 201.
+    \item r(Id) - numeric assignment ID, for example: \textit{1226612};
+    \item r(InterviewsCount) - number of interviews existing originating from this assignment, (expected always 0) for example: \textit{0};
+    \item r(Archived) - numeric presentation of archival status (1=archived, 0=not archived), (expected always 0, not archived), for example: \textit{0};
+    \item r(WebMode) - numeric presentation of the mode (1=Web mode, 0=Not web mode) for this assignment, for example: \textit{1};
+    \item r(IsAudioRecordingEnabled) - flag whether audio recording is enabled for this assignment (1=ON or 0=OFF), for example: \textit(0);
+    \item r(Email) - email of the web interview respondent, for example: \textit{"test@site.org"};
+    \item r(CreatedAtUtc) - timestamp of the creation of the assignment (in UTC), for example: \textit{"2022-10-18T22:01:11.351222Z"};
+    \item r(UpdatedAtUtc) - timestamp of the last update of the assignment (in UTC), for example: \textit{"2022-10-18T22:01:11.351222Z"}; (expected to be equal to timestamp of creation for newly created assignments);
+    \item r(QuestionnaireId) - identity of the questionnaire (questionnaire ID and version), for example: \textit{"8352f83fe9eb4e48888142402a49ce3e\$1"};
+    \item r(ResponsibleName) - login of the responsible, for example: \textit{"SergiyInt"};
+    \item r(ResponsibleId) - GUID of the responsible, for example: \textit{"7607263d-ad66-4cc6-a175-42d3e6a57745"};
+    \item r(WebInterviewLink) - web link to start an interview from this assignment, for example: \textit{"https://demo.mysurvey.solutions/census/WebInterview/V9FNU9PZ/Start"}.
+\end{compactitem}
 
 \errheader
 \begin{itemize}
@@ -339,4 +373,7 @@ responsible must be a user in the interviewer role.
     \item Error \ecode{7003} is returned if the \textit{quantity} option is
     more than 1, but the assignment is created not in web mode (option webmode is
     0).
+
+    \item Error \ecode{7004} is returned if the \textit{quantity} option is
+    more than 10,000, which is a Survey Solutions limit for finite assignments.
 \end{itemize}

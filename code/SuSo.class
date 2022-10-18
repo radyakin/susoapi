@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.30"
+  string wrapperver="1.31"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -1016,9 +1016,9 @@ def maps_uploadmaps(URL, mapsfile):
             "operations": json.dumps(operations),
             "map": '{ "file": ["variables.file"] }',
         }
-        
+
         r=run_query_files(URL, data, files) # Execute the query
-        
+
         # // fill out the frame with results
         maps=r["data"]["uploadMap"]
         for m in maps:
@@ -1222,13 +1222,23 @@ def assignments_create():
   result=requests.post(URL, headers=ajpheader, data=qry, auth=get_credentials())
   if (read_property("verbose")=="true"):
     print(result)
+    print(result.json())
     print(result.status_code)
   # // successful creation 200 for <21.05 and 201 for 21.05+
 
   Macro.setLocal("status_code",str(result.status_code))
+  Scalar.setValue('r(status_code)',result.status_code)
   if ((result.status_code!=200) and (result.status_code!=201)):
     SFIToolkit.errprintln("Server responded: "+str(result.status_code))
+    if (result.json()["VerificationStatus"]!=None):
+      print(result.json()["VerificationStatus"]["Errors"])
     return
+
+  if (result.json()["WebInterviewLink"]!=None):
+    Macro.setGlobal("r(WebInterviewLink)", result.json()["WebInterviewLink"])
+  if (result.json()["VerificationStatus"]!=None):
+    Macro.setGlobal("r(VerificationStatus)", result.json()["VerificationStatus"])
+  rsavejson(result.json()["Assignment"])
 
 def statistics_questionnaires():
   # returns the list of questionnaires in the current workspace area
@@ -2456,7 +2466,7 @@ program define .workspaces_list
 end
 
 
-program define .assignments_create, rclass
+program define .assignments_create, // rclass
     syntax , responsible(string) qxguid(string) [qxversion(integer 1)] ///
              [quantity(integer 1)] ///
              [email(string) password(string) webmode(integer 0)] ///
@@ -2477,10 +2487,15 @@ program define .assignments_create, rclass
     	display as error "Error! For web assignments with specified email the quantity must be equal to 1."
         error 7003
     }
+
+    if (`quantity'>10000) {
+    	display as error "Error! For the value of {it:quantity()} for new assignments must be no more than 10,000."
+        error 7004
+    }
+
     if (!`webmode' & `audio') {
     	display as result "Warning! Audio recording is not available on the web, only on the tablets."
     }
-
 
     .boolstandard `audio'
     local bool_audio = "`r(result)'"
@@ -2493,9 +2508,11 @@ program define .assignments_create, rclass
     local qry `"{ "Responsible": "`responsible'", "Quantity": `quantity', "QuestionnaireId": "`qxguid'\$`qxversion'", "Email": "`email'", "Password": "`password'", "WebMode": `bool_web', "IsAudioRecordingEnabled": `bool_audio', "Comments": "`comment'", "IdentifyingData": [`data'], "ProtectedVariables": ["`protected'"] }"'
 
     display `"`macval(qry)'"'
+    capture ds // << instead of "return clear"
+
     python: assignments_create()
 
-    if (!inlist(r(result_code),200,201)) {
+    if (!inlist(r(status_code),200,201)) {
     	error 7099
     }
 
