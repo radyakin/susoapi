@@ -27,13 +27,20 @@ As a result of execution of this method, the following properties of the API-cli
 
 \optsheader
 \begin{itemize}
-      \item \option{role} - role of the new account, can be one of "\textit{interviewer}", or "\textit{supervisor}", or "\textit{headquarters}".
+      \item \option{role} - role of the new account, can be one of "\textit{interviewer}", or "\textit{supervisor}", or "\textit{headquarters}", or "\textit{observer}".
       \item \option{username} - user name of the new account (must be unique on the server).
       \item \option{password} - password for the new account, must satisfy the password security requirements for the server.
       \item \option{supervisor} - name of the supervisor for the new account. Must be specified for the interviewer accounts, may not be specified for any other accounts. Supervisor with this account must already exist on the server.
      \item \option{fullname} - (optional) full name of the user of the new account.
      \item \option{phonenumber} - (optional) phone number of the user of the new account.
      \item \option{email} - (optional) email of the user of the new account.
+\end{itemize}
+
+\errheader
+\begin{itemize}
+    \item Error \ecode{110} is returned if the user \textit{username} can't be created (already exists).
+    \item Error \ecode{197} is returned if an invalid role was specified.
+    \item Error \ecode{198} is returned if the account to be created is in the role \textit{interviewer}, but no supervisor name was specified.
 \end{itemize}
 
 \savedres

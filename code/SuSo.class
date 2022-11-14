@@ -455,7 +455,7 @@ def users_user(guid) :
   v=read_property("susoversionmajor")
   if (float(v)<21.05):
     # // in older versions returned as an array with no more than 1 element
-	Macro.setGlobal("r(Role)" , r["Roles"][0])
+    Macro.setGlobal("r(Role)" , r["Roles"][0])
   else:
     # // in modern versions returned as a scalar element
     Macro.setGlobal("r(Role)" , r["Role"])
@@ -494,12 +494,16 @@ def users_create():
 
     # // if user exists: =  400
     # // {"UserId":null,"Errors":["Please choose another username"]}
-    if (r["UserId"]!=None):
-      Macro.setGlobal("r(UserID)", r["UserId"])
-    if (r["Errors"]!=None):
-      i=1
-      for e in r["Errors"]:
-        Macro.setGlobal("r(Error"+str(i)+ ")", e)
+
+    if (response.status_code==200):
+      if (r["UserId"]!=None):
+        Macro.setGlobal("r(UserID)", r["UserId"])
+
+    else :
+      if (r["Errors"]!=None):
+        i=1
+        for e in r["Errors"]:
+          Macro.setGlobal("r(Error"+str(i)+ ")", e)
 
 def users_archive(guid):
     # // Archives a user on the server
@@ -1359,9 +1363,9 @@ program define .new
     display as text `"Survey Solutions data server"'
     display as text `"{browse "`.server'":`.server'}"'
     display as text `"Reported version descriptor: "' as result `"`.versionstr'"'
-	display as text `"Version: "' as result `"`.susoversion'"'
-	display as text `"Major version: "' as result `"`.susoversionmajor'"' ///
-	        as text `" {browse "https://docs.mysurvey.solutions/release-notes/version-`=subinstr("`.susoversionmajor'",".","-",.)'/":"Release notes"}"'
+    display as text `"Version: "' as result `"`.susoversion'"'
+    display as text `"Major version: "' as result `"`.susoversionmajor'"' ///
+            as text `" {browse "https://docs.mysurvey.solutions/release-notes/version-`=subinstr("`.susoversionmajor'",".","-",.)'/":"Release notes"}"'
 
     quietly pwf
     local cframe `"`=r(currentframe)'"'
@@ -1390,7 +1394,7 @@ program define .new
         if (`c' < 0) exit 3333
     }
     else {
-    	.workspace=""
+        .workspace=""
     }
 
     // Now display the user identity
@@ -1553,8 +1557,8 @@ program define .users_create
              [fullname(string) phonenumber(string) email(string)]
 
     local role2=strlower(`"`role'"')
-    if !inlist(`"`role2'"',"interviewer","supervisor","headquarters") {
-      display as error "Error! Users may be created only in the following roles: interviewer, supervisor, headquarters. The role `role' is not valid."
+    if !inlist(`"`role2'"',"interviewer","supervisor","headquarters","observer") {
+      display as error "Error! Users may be created only in the following roles: interviewer, supervisor, headquarters, observer. The role `role' is not valid."
       error 197
     }
 
@@ -1572,10 +1576,11 @@ program define .users_create
 
     local qry `"{ "Role": "`role'", "UserName": "`username'", "FullName": "`fullname'","PhoneNumber": "`phonenumber'"`mailcontact',"Password": "`password'","Supervisor": "`supervisor'" }"'
 
+    capture ds ________________________________ // << instead of "return clear"
     python: users_create()
     if missing(r(UserID)) {
         display as error "Error! User was not created"
-        error 196
+        error 110
     }
 end
 
@@ -2508,7 +2513,7 @@ program define .assignments_create, // rclass
     local qry `"{ "Responsible": "`responsible'", "Quantity": `quantity', "QuestionnaireId": "`qxguid'\$`qxversion'", "Email": "`email'", "Password": "`password'", "WebMode": `bool_web', "IsAudioRecordingEnabled": `bool_audio', "Comments": "`comment'", "IdentifyingData": [`data'], "ProtectedVariables": ["`protected'"] }"'
 
     display `"`macval(qry)'"'
-    capture ds // << instead of "return clear"
+    capture ds ________________________________ // << instead of "return clear"
 
     python: assignments_create()
 
