@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.31"
+  string wrapperver="1.33"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
