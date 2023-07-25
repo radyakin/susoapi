@@ -889,6 +889,10 @@ def run_query_files(URL, data, files):
     result = requests.post(URL, data=data, files=files, auth=get_credentials())
     return(graphql_print_errors(result, ""))
 
+def run_query_files_h(URL, headers, data, files):
+    result = requests.post(URL, headers=headers, data=data, files=files, auth=get_credentials())
+    return(graphql_print_errors(result, ""))
+    
 def users_reflect(URL):
 
     query = """
@@ -908,15 +912,15 @@ def users_reflect(URL):
     Macro.setLocal("userrole",role)
     Macro.setLocal("userworkspaces",' '.join(map(str, result['data']['viewer']['workspaces'])))
 
-def maps_getmaps(URL, fm, fu):
+def maps_getmaps(URL, fm, fu, workspace):
 
     query = """
     {
-      maps {
+      maps(workspace: "%s") {
         totalCount
         nodes {
           fileName,
-          importDate,
+          importDateUtc,
           size,
           xMaxVal,
           yMaxVal,
@@ -931,7 +935,7 @@ def maps_getmaps(URL, fm, fu):
         }
       }
     }
-    """
+    """ % (workspace)
 
     result = run_query(URL, query) # Execute the query
     maps=result['data']['maps']
@@ -941,7 +945,7 @@ def maps_getmaps(URL, fm, fu):
         Data.addObs(1)
         n=Data.getObsTotal()-1
         Data.storeAt("filename", n, node["fileName"])
-        Data.storeAt("importdate", n, node["importDate"])
+        Data.storeAt("importdateutc", n, node["importDateUtc"])
         Data.storeAt("size",  n, node["size"])
         Data.storeAt("users", n, len(node["users"]))
 
@@ -1007,21 +1011,24 @@ def maps_deletemap(URL, map, workspace):
       }""" % (map, workspace)
     result = run_query(URL, query) # Execute the query
 
-def maps_uploadmaps(URL, mapsfile):
+def maps_uploadmaps(URL, mapsfile, workspace):
 
         files = {"file": ("maps.zip", open(mapsfile, 'rb'), 'application/zip')}
 
         operations = {
-            "query": 'mutation HeadquartersMutation('+'$'+'file: Upload!) {uploadMap(file: '+'$'+'file) {fileName, importDateUtc}}',
+            "query": 'mutation HeadquartersMutation('+'$'
+            + """file: Upload!) {uploadMap(workspace: "%s", file: """ % (workspace)
+            + '$'
+            + 'file) {fileName, importDateUtc}}',
             "variables": {"file": None},
         }
-
         data = {
             "operations": json.dumps(operations),
             "map": '{ "file": ["variables.file"] }',
         }
 
-        r=run_query_files(URL, data, files) # Execute the query
+        headers={'GraphQL-Preflight':'1'}
+        r=run_query_files_h(URL, headers, data, files) # Execute the query
 
         # // fill out the frame with results
         maps=r["data"]["uploadMap"]
@@ -2109,7 +2116,7 @@ program define .maps_getmaps
     frame change `maps'
 
     generate filename   = ""
-    generate importdate = ""
+    generate importdateutc = ""
     generate long size  = .
     generate long users = .
 
@@ -2128,8 +2135,13 @@ program define .maps_getmaps
         generate username=""
         frame change default
     }
+    /*
+    display `"`.graphql'"'
+    display `"`maps'"'
+    display `"`users'"' 
+    */
 
-    python: maps_getmaps("`.graphql'","`maps'","`users'")
+    python: maps_getmaps("`.graphql'","`maps'","`users'","`.workspace'")
 end
 
 program define .maps_uploadmaps, rclass
@@ -2155,7 +2167,7 @@ program define .maps_uploadmaps, rclass
       label variable importdateutc "Timestamp of map file import in UTC timezone"
     }
 
-    python: maps_uploadmaps("`.graphql'", "`mapsfile'")
+    python: maps_uploadmaps("`.graphql'", "`mapsfile'", "`.workspace'")
     return scalar nMapsUploaded=`nMapsUploaded'
 end
 
@@ -2328,7 +2340,12 @@ program define .graphql
     // Returns API endpoint on the server for GraphQL queries
     // Intended for internal use
     version 16.0
-    class exit "`.server'/graphql"
+    if (`"`.workspace'"'!="") {
+      class exit "`.server'/`.workspace'/graphql"
+    }
+    else {
+      class exit "`.server'/graphql"
+    }
 end
 
 // TODO: Calendar events for assignments
