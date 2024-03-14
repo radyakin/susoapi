@@ -1564,8 +1564,14 @@ program define .users_create
              [fullname(string) phonenumber(string) email(string)]
 
     local role2=strlower(`"`role'"')
-    if !inlist(`"`role2'"',"interviewer","supervisor","headquarters","observer") {
-      display as error "Error! Users may be created only in the following roles: interviewer, supervisor, headquarters, observer. The role `role' is not valid."
+    if !inlist(`"`role2'"', ///
+        "interviewer", ///
+        "supervisor", ///
+        "headquarter", ///
+        "observer", ///
+        "apiuser") ///
+    {
+      display as error "Error! Users may be created only in the following roles: {it:interviewer}, {it:supervisor}, {it:headquarter}, {it:observer}, {it:apiuser}.{break}The role {it:`role'} is not valid.{break}"
       error 197
     }
 
