@@ -1359,6 +1359,20 @@ program define .new
         .set `0'
     }
 
+    display as text "{break}"
+    display as text `"Survey Solutions data server"'
+    display as text `"{browse "`.server'":`.server'}"'
+
+    if (`"`.server'"'=="") {
+        display as error "Error! Server name may not be empty!"
+        error 197
+    }
+    local lsrv=strlower(`"`.server'"')
+    if (substr(`"`lsrv'"',1,7)!="http://" & substr(`"`lsrv'"',1,8)!="https://") {
+        display as error "Error! Server address must start with {it:http://} or {it:https://}!"
+        error 197
+    }
+
     // Get the server version (not from API)
     tempfile tmp
     copy `"`.server'/.version"' `"`tmp'"'
@@ -1366,9 +1380,6 @@ program define .new
     .setversion, v(`"`v'"')
     erase `"`tmp'"'
 
-    display as text "{break}"
-    display as text `"Survey Solutions data server"'
-    display as text `"{browse "`.server'":`.server'}"'
     display as text `"Reported version descriptor: "' as result `"`.versionstr'"'
     display as text `"Version: "' as result `"`.susoversion'"'
     display as text `"Major version: "' as result `"`.susoversionmajor'"' ///
