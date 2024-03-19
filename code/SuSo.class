@@ -256,6 +256,12 @@ def qx_list():
   URL=f"{get_server_url()}/api/v1/questionnaires/"
   y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
 
+  # // can get here: 403 - user not authorized; 404 - workspace not found;
+  if (y.status_code!=200):
+    Macro.setLocal("status_code",str(y.status_code))
+    Scalar.setValue('r(status_code)',y.status_code)
+    return y.status_code
+  
   totalcount=y.json()["TotalCount"]
   if (read_property("verbose")=="true"):
     print(totalcount, " questionnaires on the server")
@@ -1497,6 +1503,10 @@ program define .qx_list
     generate strL  qx_lastentry=""
 
     python : qx_list()
+    if `"`status_code'"'!="200" {
+        display as error "Can't get a list of questionnaires."
+        display as error "Status code: {it:`status_code'}"
+    }
 end
 
 program define qx_interviews
