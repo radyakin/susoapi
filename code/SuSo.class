@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.33"
+  string wrapperver="1.40"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -1418,7 +1418,8 @@ program define .new
     // Now display the user identity
     .users_reflect
     display as text "{break}"
-    display as text "User `.username':"
+    display as text "User information:"
+    display as text "- username: " as result "`.username'"
     display as text "- identity: " as result "`.userid'"
     display as text "- role: " as result "`.userrole'"
     display as text "- access to workspaces: " as result "`printable'"
@@ -1440,10 +1441,31 @@ end
 
 program define .set
     args server username password workspace
-    .server    = "`server'"
-    .username  = "`username'"
-    .password  = "`password'"
-    .workspace = "`workspace'"
+
+    if (substr(`"`server'"',1,1)==":") {
+        local sname=substr(`"`server'"',2,.)
+        local filename=`"`sname'.do"'
+        quietly findfile `"`filename'"'
+        if _rc {
+            display as error "Can't find configuration file for server: {it:`sname'}"
+            error 601
+        }
+
+        quietly do `"`r(fn)'"'
+
+        .server    = "$SUSO_Server" 
+        .username  = "$SUSO_User" 
+        .password  = "$SUSO_Password"
+        .workspace = "$SUSO_Workspace"
+
+        macro drop SUSO_Server SUSO_User SUSO_Password SUSO_Workspace
+    }
+    else {
+        .server    = "`server'"
+        .username  = "`username'"
+        .password  = "`password'"
+        .workspace = "`workspace'"
+    }
 end
 
 program define .qx_document
