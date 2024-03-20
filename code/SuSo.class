@@ -746,7 +746,7 @@ def assignments_close(assignmentid):
     if (read_property("verbose")=="true"):
       print(response.status_code)
     # // todo: define error handling
-    Macro.setScalar('r(status_code)', str(response.status_code))
+    Scalar.setValue('r(status_code)', response.status_code)
 
 def assignments_getquantitysettings(assignmentid):
     response = requests.get(f'{get_server_url()}/api/v1/assignments/{assignmentid}/assignmentQuantitySettings', data={}, auth=get_credentials())
