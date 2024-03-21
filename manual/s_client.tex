@@ -86,6 +86,46 @@ own dependencies). Additional information here:
 \item \option{workspace} - workspace name, for example: \textquotedbl\textit{Census}\textquotedbl. Workspace name is optional, if not specified, the default workspace is assumed.
 \end{itemize}
 
+For example, to set up a client to work with the server
+\textquotedbl\textit{https://demo.mysurvey.solutions}\textquotedbl
+under the account of user \textquotedbl\textit{apiuser1}\textquotedbl  with password
+\textquotedbl\textit{Secret321Password}\textquotedbl (not an actual password)
+and switch to the workspace \textquotedbl\textit{Jan24}\textquotedbl we may
+execute the following Stata code:
+
+\begin{lstlisting}
+.demo=.SuSo.new "https://demo.mysurvey.solutions" ///
+      "apiuser1" "Secret321Password" ///
+      "Jan24"
+\end{lstlisting}
+
+After the client is created, we direct all the calls listed in this manual to
+the created client object (\option{.demo} in this case) and not to the class
+(\option{.SuSo} in this case).
+
+Alternatively, one can use the following syntax:
+\begin{lstlisting}
+.new :file
+\end{lstlisting}
+
+\paramsheader
+\begin{itemize}
+\item \option{:file} - name of a do-file setting the configuration settings into predefined globals, without an extension (extension *.do is implied) and with mandatory column prepending the name, for example: \textquotedbl\textit{:myserver}\textquotedbl
+\end{itemize}
+
+The alternative approach is useful to remove the mentioning of the sensitive information from your main file code into a separate file. If this approach is used, the do-file should set the following globals:
+\begin{lstlisting}
+    global SUSO_Server="https://...server.name..."
+    global SUSO_User="...user.name..."
+    global SUSO_Password="...password..."
+    global SUSO_Workspace="...workspace.name..."
+\end{lstlisting}
+
+These four globals will be substituted in to the corresponding places of the constructor method listed above. Of course one can omit workspace title if not needed, as it is optional.
+
+The file itself may be saved anywhere where Stata searches for files. Check the documentation for Stata's \option{adopath} command for more information on this:\newline
+\href{https://www.stata.com/manuals/psysdir.pdf}{https://www.stata.com/manuals/psysdir.pdf}.
+
 \subsection{Token-based authentication}
 Token-based authentication has been introduced in version 22.02 of Survey Solutions. Users wishing to utilize token-based authentication should follow the same instructions as above, with the following differences:
 \begin{itemize}
