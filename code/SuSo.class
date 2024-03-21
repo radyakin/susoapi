@@ -289,7 +289,7 @@ def qx_list():
         Data.storeAt("qx_lastentry",n,q["LastEntryDate"])
 
 def qx_interviews(qguid, qversion):
-  # // Returns the list of questionnaires in the current data area
+  # // Returns the list of interviews for a given questionnaire in the current data area
   # // In this query 'offset' is in fact a 'page number'
 
   URL=f"{get_server_url()}/api/v1/questionnaires/{qguid}/{str(qversion)}/interviews"
@@ -324,6 +324,55 @@ def qx_interviews(qguid, qversion):
         Data.storeAt("received_by_device",        n,iview["ReceivedByDevice"])
         if (iview["ReceivedByDeviceAtUtc"]!=None):
           Data.storeAt("received_by_device_at_utc", n, iview["ReceivedByDeviceAtUtc"])
+
+
+def get_assignments(qid, responsible, supervisorid, archive):
+  # // Returns the list of assignments in the current data area
+  # // In this query 'offset' is in fact different from interviews (method qx_interviews) see note below
+
+  qfilter=f"QuestionnaireId={qid}&" if qid!="" else ""
+  rfilter=f"Responsible={responsible}&" if responsible!="" else ""
+  sfilter=f"SupervisorId={supervisorid}&" if supervisorid!="" else ""
+  afilter="Showarchive=true&" if archive==1 else ""
+  allfilter=f"{qfilter}{rfilter}{sfilter}{afilter}"
+  
+  URL=f"{get_server_url()}/api/v1/assignments?{allfilter}"
+  y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+
+  totalcount=y.json()["TotalCount"]
+  if (read_property("verbose")=="true"):
+    print(totalcount, " assignments on the server")
+
+  const_pagesize=40
+  page=0
+  while(const_pagesize*page<totalcount):
+    page=page+1
+    # // in the next line the pagination rule is different from the interviews (have to subtract 1 from page number)
+    URL=f"{get_server_url()}/api/v1/assignments?{allfilter}limit={str(const_pagesize)}&offset={const_pagesize*(page-1)}&order=Id"
+    if (read_property("verbose")=="true"):
+      print("Processing page: ", page)
+    y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
+    qxs=y.json()["Assignments"]
+    for iview in qxs:
+        Data.addObs(1)
+        n=Data.getObsTotal()-1
+        Data.storeAt("id",n,iview["Id"])
+        Data.storeAt("responsible_id",n,iview["ResponsibleId"])
+        Data.storeAt("responsible_name",n,iview["ResponsibleName"])
+        Data.storeAt("questionnaireid",n,iview["QuestionnaireId"])
+        Data.storeAt("interviews_count",n,iview["InterviewsCount"])
+        Data.storeAt("quantity",n,iview["Quantity"])
+        Data.storeAt("archived",n,int(iview["Archived"])) # // convert true/false to 1/0
+        Data.storeAt("created_at_utc",n,iview["CreatedAtUtc"])
+        Data.storeAt("updated_at_utc",n,iview["UpdatedAtUtc"])
+        if (iview["Email"]!=None):
+          Data.storeAt("email",n,iview["Email"])
+        if (iview["Password"]!=None):
+          Data.storeAt("password",n,iview["Password"])
+        Data.storeAt("webmode",n, int(iview["WebMode"])) # // convert true/false to 1/0
+        if (iview["ReceivedByTabletAtUtc"]!=None):
+          Data.storeAt("received_by_tablet_at_utc",n,iview["ReceivedByTabletAtUtc"])
+        Data.storeAt("is_audio_recording_enabled",n,int(iview["IsAudioRecordingEnabled"])) # // convert true/false to 1/0
 
 def notice_set(message):
   # // Sets global notice on the server
@@ -1509,6 +1558,60 @@ program define .qx_list
         error `=(10000+`status_code')'
     }
 end
+
+
+program define get_assignments
+    version 16.0
+    syntax , [qguid(string) qversion(integer 1) ///
+             responsible(string) supervisorid(string) showarchive] ///
+             [frame(string)] /* custom search query ??? */
+    
+    // todo: perhaps alternatively support qid() as a single parameter??
+
+    if (`"`qguid'"'!="") {
+        .guidstandard `qguid', format(short)
+        local qguid="`r(result)'"
+        local qid = `"`qguid'%24"' + string(`qversion')
+    }
+    if `"`supervisorid'"'!="" {
+        .guidstandard `supervisorid', format(dash)
+        local supervisorid="`r(result)'"
+    }
+    local archive = (`"`showarchive'"'!="")
+
+    if (`"`frame'"'=="") clear
+    else {
+        frame create `frame'
+        frame change `frame'
+    }
+    
+    generate long id=.
+    generate str36 responsible_id=""
+    generate strL responsible_name=""
+    generate strL questionnaireid=""
+    generate long interviews_count=.
+    generate long quantity=.
+    generate byte archived=.
+    generate strL created_at_utc=""
+    generate strL updated_at_utc=""
+    generate strL email=""
+    generate strL password=""
+    generate byte webmode=.
+    generate strL received_by_tablet_at_utc=""
+    generate byte is_audio_recording_enabled=.
+
+    .boolstandard 0
+    local label0 = r(result)
+    .boolstandard 1
+    local label1 = r(result)
+
+    label define labelTrueFalse 0 "`label0'" 1 "`label1'"
+    label values archived webmode is_audio_recording_enabled labelTrueFalse
+
+    python : get_assignments("`qid'","`responsible'","`supervisorid'",`archive')
+
+end
+
 
 program define qx_interviews
     version 16.0

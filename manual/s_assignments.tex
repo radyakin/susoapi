@@ -1,6 +1,49 @@
 \section{Assignments}
 \putimage{pexels-pixabay-164686.jpg}
 
+
+
+
+
+\subsection{Get a list of assignments on the server}
+\begin{lstlisting}[style=CommandLineStyle]
+.get_assignments, [qguid(string) qversion(integer)]
+                  [responsible(string) supervisorid(string)]
+                  [showarchive frame(string)]
+
+\end{lstlisting}
+
+\optsheader
+\begin{itemize}
+  \item \option{qguid} - questionnaire GUID identifier (optional, if not specified, no filtering by questionnaire or version is done).
+  \item \option{qversion} - questionnaire version (optional, if not specified 1 is assumed, only effective when questionnaire GUID is specified).
+  \item \option{responsible} - optional responsible name or GUID.
+  \item \option{supervisorid} - optional supervisor GUID (not username).
+  \item \option{showarchive} - regulates whether to search among active assignments (when this option is not specified, default) or archived assignments (when this option is specified).
+  \item \option{frame} - (optional) name of the frame to save the list of the interviews.
+\end{itemize}
+
+\structheader{Assignments list}
+\begin{compactitem}
+  \datafield{long id } - for example: \textit{1064};
+  \datafield{str36 responsible\_id } - identifier (GUID) of a person designated responsible
+  for the assignment, for example: \textit{"1e7ef1e1-2123-4b5f-8a34-72ad1c494d1b"};
+  \datafield{strL responsible\_name } - account name of a person designated responsible
+  for the assignment, for example: \textit{"Natalia"};
+  \datafield{strL questionnaireid } - for example: \textit{"8f1286c40c90475a9100b618584410b6\$1"};
+  \datafield{long interviews\_count } - number of interviews assignment calls for, for example: \textit{10};
+  \datafield{long quantity } - for example \textit{1};
+  \datafield{byte archived } - 1 if the assignment is archived, 0 if not archived (active), for example \textit{0};
+  \datafield{strL created\_at\_utc } - timestamp for when the assignment was created, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
+  \datafield{strL updated\_at\_utc } - timestamp for when the assignment was last updated, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
+  \datafield{strL email } - (for web assignments only) the email of the assignment recipient (respondent), for example: \textit{"somebody@somewhere.org"};
+  \datafield{strL password } - (for web assignments only) the password to open the assignment (begin interview), for example: \textit{"PASS1234"};
+  \datafield{byte webmode } - flag which indicates if the assignment is a web assignment (value is 1), or not (value is 0), for example: \textit{1};
+  \datafield{strL received\_by\_tablet\_at\_utc } - timestamp for when the assignment was received by a mobile device, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
+  \datafield{byte is\_audio\_recording\_enabled } - 1 if audio audit is enabled for the assignment, 0 if not enabled, for example: \textit{0};
+\end{compactitem}
+
+
 \subsection{Get details of an assignment}
 
 \begin{lstlisting}[style=CommandLineStyle]
