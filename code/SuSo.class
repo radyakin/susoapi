@@ -287,6 +287,9 @@ def qx_list():
         Data.storeAt("qx_title",n,q["Title"])
         Data.storeAt("qx_var",n,q["Variable"])
         Data.storeAt("qx_lastentry",n,q["LastEntryDate"])
+    Macro.setLocal("status_code","200")
+    Scalar.setValue('r(status_code)',200)
+    return 200
 
 def qx_interviews(qguid, qversion):
   # // Returns the list of interviews for a given questionnaire in the current data area
