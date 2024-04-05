@@ -6,7 +6,7 @@ Note: as per API specification in Survey Solutions v21.01.8 (build 30793) with u
 
 To install the most recent version from the `main` development branch type in [Stata](https://www.stata.com/):
 ```
-net from https://raw.githubusercontent.com/radyakin/susoapi/main/code/stata.toc
+net from https://raw.githubusercontent.com/radyakin/susoapi/main/code/
 ```
 and follow the prompts on the screen.
 
