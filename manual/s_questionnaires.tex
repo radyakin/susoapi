@@ -2,13 +2,16 @@
 \putimage{pexels-alex-green-5699456.jpg}
 
 \subsection{Get a list of questionnaires on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .qx_list, frame(string)
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
-  \item \option{frame} - (optional) frame name where to save the list. If not specified, the current frame is cleared and used to store the list.
+  \item \option{frame} - (optional) frame name where to save the list. If not
+  specified, the current frame is cleared and used to store the list.
 \end{itemize}
 
 \structheader{Questionnaires list}
@@ -23,15 +26,21 @@
 
 
 \subsection{Get a list of interviews of a questionnaire on the server}
-\begin{lstlisting}[style=CommandLineStyle]
-.qx_interviews, qguid(string) qversion(integer) [frame(string)]
+
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.qx_interviews,
+    qguid(string) qversion(integer)
+    [frame(string)]
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
-  \item \option{qguid} - questionnaire guid identifier.
+  \item \option{qguid} - questionnaire GUID identifier.
   \item \option{qversion} - questionnaire version.
-  \item \option{frame} - (optional) name of the frame to save the list of the interviews.
+  \item \option{frame} - (optional) name of the frame to save the list of the
+  interviews.
 \end{itemize}
 
 \structheader{Interviews list}
@@ -53,53 +62,79 @@
 
 \subsection{Get a questionnaire document in JSON format}
 
-\begin{lstlisting}[style=CommandLineStyle]
-.qx_document , qguid(string) qversion(integer) saveto(string) [replace]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.qx_document ,
+    qguid(string) qversion(integer)
+    saveto(string) [replace]
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
+
     \item \option{qguid} - GUID of the questionnaire as a string, for example:
-          \newline \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+          \xmpl{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+
     \item \option{qversion} - version of the questionnaire as imported
-          to the HQ, numeric, for example: \textit{2}
+          to the HQ, numeric, for example:
+          \xmpl{2}
+
     \item \option{saveto} - name of the file to be saved, for example:
-          \textit{"C:/Temp/qx.json"}
+          \xmpl{"C:/Temp/qx.json"}
+
     \item \option{replace} - (optional) allow overwriting the output file
+
 \end{itemize}
 
 \subsection{Set audio audit for the survey}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .qx_setaudio qguid qversion value
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
     \item \option{qguid} - GUID of the questionnaire as a string, for example:
-          \newline
-          \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+          \xmpl{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+
     \item \option{qversion} - version of the questionnaire as imported
-          to the HQ, numeric, for example: \textit{2}
+          to the HQ, numeric, for example:
+          \xmpl{2}
+
     \item \option{value} - new mode of audio audit: \textit{1=ON} or
-          \textit{0=OFF}.
+          \textit{0=OFF}, for example:
+          \xmpl{1}
+
 \end{itemize}
 
 \subsection{Get status of audio audit for the survey}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .qx_getaudio qguid qversion
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
+
     \item \option{qguid} - GUID of the questionnaire as a string, for example:
-          \newline
-          \textit{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+          \xmpl{"2d9d305f-fcc8-468c-9c7a-b3468d8204a7"}
+
     \item \option{qversion} - version of the questionnaire as imported
-          to the HQ, numeric, for example: \textit{2}
+          to the HQ, numeric, for example:
+          \xmpl{2}
+
 \end{itemize}
 
 \savedres
 \begin{compactitem}
-    \item r(record\_audio) - numeric 1=ON or 0=OFF.
-    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+
+    \item \savedresult{r(record\_audio)} - numeric \textit{1=ON} or
+    \textit{0=OFF}.
+
+    \item \savedresult{r(status\_code)} - numeric status code for API query
+    (successful completion is indicated by code 200).
+
 \end{compactitem}

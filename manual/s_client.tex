@@ -10,7 +10,9 @@ control of a Survey Solutions data server from Stata scripts.
 
 \begin{itemize}
     \item \textbf{Stata 16.0} or newer.
-    \item \textbf{Python 3.8} or newer (installed, configured and accessible from Stata), additional information here: \href{https://www.stata.com/python/pystata/install.html}{https://www.stata.com/python/pystata/install.html}
+    \item \textbf{Python 3.8} or newer (installed, configured and accessible
+    from Stata), additional information here: \newline
+    \href{https://www.stata.com/python/pystata/install.html}{https://www.stata.com/python/pystata/install.html}
     \item \textbf{Python modules} (see Dependencies below).
 \end{itemize}
 
@@ -38,10 +40,18 @@ control of a Survey Solutions data server from Stata scripts.
 \vskip16pt
 \textbf{Where to get:}\par
 \begin{itemize}
-  \item \textit{Stata:} \href{https://www.stata.com}{https://www.stata.com}
-  \item \textit{Python:} \href{https://www.python.org/downloads/}{https://www.python.org/downloads/}
-  \item \textit{This API client:} in Stata command prompt type \statacmd{ssc install susoapi}
-  \item \textit{Survey Solutions server:} \href{https://mysurvey.solutions/download}{https://mysurvey.solutions/download}
+
+  \item \textit{Stata}, available for purchase from: \newline
+  \href{https://www.stata.com}{https://www.stata.com}
+
+  \item \textit{Python}, available for free download from: \newline
+  \href{https://www.python.org/downloads/}{https://www.python.org/downloads/}
+
+  \item \textit{This API client:} in Stata command prompt type: \newline
+  \statacmd{ssc install susoapi}
+
+  \item \textit{Survey Solutions server}, available for free download from: \newline
+  \href{https://mysurvey.solutions/download}{https://mysurvey.solutions/download}
 \end{itemize}
 
 \vskip16pt
@@ -49,8 +59,10 @@ control of a Survey Solutions data server from Stata scripts.
 \vskip16pt
 When you type the following command in Stata:\par
 \vskip16pt
-\begin{lstlisting}
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 python : import sys ; print(sys.version)
+
 \end{lstlisting}
 \vskip16pt
 you should receive a response indicating Python version. For example: \par
@@ -69,34 +81,49 @@ If you are getting an error, then your Python installation is unusable from Stat
 
 Additional module \textbf{requests} needs to be installed with the following
 command: \texttt{pip install requests}. (While being installed it pulls its
-own dependencies). Additional information here:
+own dependencies). Additional information here:\newline
 \href{https://pypi.org/project/requests/}{https://pypi.org/project/requests/}.
 
 \vskip16pt
 \subsection{Create a new API client}
-\begin{lstlisting}
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
 .new server username password [workspace]
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-\item \option{server} - URL of the server, for example: \textquotedbl\textit{https://demo.mysurvey.solutions}\textquotedbl
-\item \option{username} - name of the API user account, for example: \textquotedbl\textit{WeeklyAPI}\textquotedbl
-\item \option{password} - API account password, for example: \textquotedbl\textit{VERY321secret}\textquotedbl
-\item \option{workspace} - workspace name, for example: \textquotedbl\textit{Census}\textquotedbl. Workspace name is optional, if not specified, the default workspace is assumed.
+
+\item \option{server} - URL of the server, for example:
+\xmpl{"https://demo.mysurvey.solutions"}
+
+\item \option{username} - name of the API user account, for example:
+\xmpl{"WeeklyAPI"}
+
+\item \option{password} - API account password, for example:
+\xmpl{"VERY321secret"}
+
+\item \option{workspace} - (optional) workspace name, for example:
+\xmpl{"Census"} \newline
+If not specified, the default workspace with name \textit{"primary"} is assumed.
+
 \end{itemize}
 
-For example, to set up a client to work with the server
-\textquotedbl\textit{https://demo.mysurvey.solutions}\textquotedbl
-under the account of user \textquotedbl\textit{apiuser1}\textquotedbl  with password
-\textquotedbl\textit{Secret321Password}\textquotedbl (not an actual password)
-and switch to the workspace \textquotedbl\textit{Jan24}\textquotedbl we may
-execute the following Stata code:
+For example, to set up a client to work with the server \newline
+\textit{"https://demo.mysurvey.solutions"}
+under the account of user
+\textit{"apiuser1"}
+with password
+\textit{"Secret321Password"}
+(not an actual password) and switch to the workspace
+\textit{"Jan24"}
+we may execute the following Stata code:
 
-\begin{lstlisting}
-.demo=.SuSo.new "https://demo.mysurvey.solutions" ///
-      "apiuser1" "Secret321Password" ///
-      "Jan24"
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.demo=.SuSo.new ///
+      "https://demo.mysurvey.solutions" ///
+      "apiuser1" "Secret321Password" "Jan24"
+
 \end{lstlisting}
 
 After the client is created, we direct all the calls listed in this manual to
@@ -104,7 +131,7 @@ the created client object (\option{.demo} in this case) and not to the class
 (\option{.SuSo} in this case).
 
 Alternatively, one can use the following syntax:
-\begin{lstlisting}
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
 .new :file
 \end{lstlisting}
 
@@ -114,16 +141,20 @@ Alternatively, one can use the following syntax:
 \end{itemize}
 
 The alternative approach is useful to remove the mentioning of the sensitive information from your main file code into a separate file. If this approach is used, the do-file should set the following globals:
-\begin{lstlisting}
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
     global SUSO_Server="https://...server.name..."
     global SUSO_User="...user.name..."
     global SUSO_Password="...password..."
     global SUSO_Workspace="...workspace.name..."
+
 \end{lstlisting}
 
 These four globals will be substituted in to the corresponding places of the constructor method listed above. Of course one can omit workspace title if not needed, as it is optional.
 
-The file itself may be saved anywhere where Stata searches for files. Check the documentation for Stata's \option{adopath} command for more information on this:\newline
+The file itself may be saved anywhere where Stata searches for files. Check the
+documentation for Stata's \option{adopath} command for more information on
+this:\newline
 \href{https://www.stata.com/manuals/psysdir.pdf}{https://www.stata.com/manuals/psysdir.pdf}.
 
 \subsection{Token-based authentication}
@@ -135,12 +166,19 @@ Token-based authentication has been introduced in version 22.02 of Survey Soluti
 
 \errheader
 \begin{itemize}
-    \item Error \ecode{5100} is returned if there is an error in establishing a secure connection to the server. Typically the code is accompanied with the message: \textit{``PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target''}.
+    \item Error \ecode{5100} is returned if there is an error in establishing a
+    secure connection to the server. Typically the code is accompanied with the
+    message: \newline
+    \textit{``PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target''}.
 \end{itemize}
 
-NB: If you don't specify a workspace, the default workspace is assumed (with identifier "primary"). The client will only be created if the user with the specified credentials actually has access to this workspace. If not, make sure you specify an appropriate workspace ID in the constructor.
+NB: If you don't specify a workspace, the default workspace is assumed (with
+identifier \textit{"primary"}). The client will only be created if the user
+with the specified credentials actually has access to this workspace. If not,
+make sure you specify an appropriate workspace ID in the constructor.
 
-Workspace may be switched dynamically already after the client has been created, by assigning:
-\begin{lstlisting}
+Workspace may be switched dynamically already after the client has been created,
+by assigning:
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
 .s.workspace="census"
 \end{lstlisting}

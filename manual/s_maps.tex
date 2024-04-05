@@ -3,8 +3,12 @@
 \putimage{pexels-andrew-neel-2859169.jpg}
 
 \subsection{Upload a map to the server.}
-\begin{lstlisting}[style=CommandLineStyle]
-.maps_uploadmaps , mapsfile(string) frame(string)
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.maps_uploadmaps ,
+    mapsfile(string)
+    frame(string)
+
 \end{lstlisting}
 
 Call this API endpoint to upload a map to the server. The map must then be
@@ -17,14 +21,18 @@ separating the folders in the path to file in the \textit{mapsfile} parameter.
 
 \paramsheader
 \begin{itemize}
+
   \item \option{mapsfile} - name of the zip archive containing one or multiple
-        map files to be uploaded to the server, for example, \textquotedbl
-        \textit{newmaps.zip}\textquotedbl, if the file is not in the current
-        directory, include the full path to the file, for example, \textquotedbl
-        \textit{C:/data/gis/maps/newmaps.zip}\textquotedbl;
+        map files to be uploaded to the server, for example, \xmpl{\textquotedbl
+        newmaps.zip\textquotedbl}, if the file is not in the current
+        directory, include the full path to the file, for example: \newline
+        \xmpl{\textquotedbl C:/data/gis/maps/newmaps.zip \textquotedbl}
+
   \item \option{frame} - name of a new frame that will be created to contain
         information about the individual map files that were uploaded, for
-        example \textquotedbl \textit{loadedmaps}\textquotedbl.
+        example: \newline
+        \xmpl{\textquotedbl \textit{loadedmaps}\textquotedbl}
+
 \end{itemize}
 
 \errheader
@@ -35,14 +43,16 @@ separating the folders in the path to file in the \textit{mapsfile} parameter.
 
 \savedres
 \begin{compactitem}
-    \item r(nMapsUploaded) - number of successfully uploaded maps.
+    \item \savedresult{r(nMapsUploaded)} - number of successfully uploaded maps.
 \end{compactitem}
 
 
 
 \subsection{Get list of maps and maps-to-user assignments}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .maps_getmaps maps [users]
+
 \end{lstlisting}
 
 \paramsheader
@@ -65,6 +75,7 @@ separating the folders in the path to file in the \textit{mapsfile} parameter.
   \datafield{double yminval }
   \datafield{double ymaxval }
 \end{compactitem}
+
 *NB: The exact storage types of the string variables depend on the content
      length and may vary.
 
@@ -73,46 +84,61 @@ separating the folders in the path to file in the \textit{mapsfile} parameter.
   \datafield{string* filename }
   \datafield{string* username }
 \end{compactitem}
+
 *NB: The exact storage types of the string variables depend on the content
      length and may vary.
 
 
 \subsection{Add an assignment of a map to a user.}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .maps_addusertomap map user
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
+
   \item \option{map} - name of the map from the list of maps
-        currently on the server, for example, \textquotedbl
-        \textit{ukraine.tif}\textquotedbl
-  \item \option{user} - interviewer account name, for example
-        \textquotedbl SergiyInt\textquotedbl.
+        currently on the server, for example: \newline
+        \xmpl{\textquotedbl ukraine.tif\textquotedbl}
+
+  \item \option{user} - interviewer account name, for example: \newline
+        \xmpl{\textquotedbl SergiyInt\textquotedbl}
+
 \end{itemize}
 
 
 \subsection{Delete an assignment of a map from a user.}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .maps_deleteuserfrommap map user
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
+
   \item \option{map} - name of the map from the list of maps currently on
-        the server, for example, \textquotedbl \textit{ukraine.tif}\textquotedbl
-  \item \option{user} - interviewer account name, for example \textquotedbl
-        SergiyInt\textquotedbl.
+        the server, for example: \newline
+        \xmpl{\textquotedbl \textit{ukraine.tif}\textquotedbl}
+
+  \item \option{user} - interviewer account name, for example: \newline
+         \xmpl{\textquotedbl SergiyInt\textquotedbl}
+
 \end{itemize}
 
 
 \subsection{Delete a map from the server.}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .maps_deletemap map
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
   \item \option{map} - name of the map from the list of maps currently on
-  the server, for example, \textquotedbl \textit{ukraine.tif}\textquotedbl
+  the server, for example: \newline
+  \xmpl{\textquotedbl \textit{ukraine.tif}\textquotedbl}
 \end{itemize}

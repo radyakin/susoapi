@@ -2,44 +2,80 @@
 \section{Data export}
 \putimage{pexels-anete-lusina-4792750.jpg}
 \subsection{Download data export file}
-\begin{lstlisting}[style=CommandLineStyle]
-.export2 , qid() saveto() [replace]
-           [ translationid() includemeta
-             status() exporttype() from() to() ]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.export2 ,
+    qid() saveto() [replace]
+    [translationid() includemeta]
+    [status() exporttype()]
+    [from() to()]
+
 \end{lstlisting}
 
-Exports data from Survey Solutions server based on the v2 data export (available in Survey Solutions version 20.07 or newer).
+Exports data from Survey Solutions server based on the v2 data export (available
+in Survey Solutions version 20.07 or newer).
 
 \optsheader
 \begin{itemize}
-\item \option{qid} - questionnaire id, for example: \textit{\textquotedbl 50756294-eca7-4765-b94d-2f607dc049a0\$13\textquotedbl}. A questionnaire id consists of the questionnaire GUID and a version number on the server concatenated with a dollar sign.
-\item \option{saveto} - name of the file to save the exported date, for example: \textit{\textquotedbl C:/data/export.zip\textquotedbl}.
-\item \option{replace} - (optional) if specified, allows to overwrite the file if it already exists.
-\item \option{translationid} - GUID of the translation of the questionnaire, for example: \textit{\textquotedbl 2075f291-eca2-4965-b24d-7f607dc049e2\textquotedbl}.
-\item \option{includemeta} - (optional) if specified this option requests meta-information to be included in the export file (specify \textit{\textquotedbl true\textquotedbl} to include, and \textit{\textquotedbl false\textquotedbl} to exclude the metadata). If not specified, the meta-information about the questionnaire (JSON-document, PDF-documents, etc) is excluded.
-\item \option{status} - (optional) filter by interview status. If specified, exported interviews data will be restricted to the data from interviews in that status, otherwise by default the data from all interviews is exported.
-\item \option{exporttype} - (optional) type of data file requested for export, can be one of the data types listed below. For example: \textquotedbl \textit{Paradata}\textquotedbl. If not specified, then \textquotedbl\textit{STATA}\textquotedbl  is assumed.
-\item \option{from} - (optional), if specified, restricts the export to interviews modified since the specified date, for example: \textquotedbl \textit{2021-01-01T19:23:43.375Z}\textquotedbl. NB: if option \textit{from()} is specified, then option \textit{to()} must also be specified.
-\item \option{to} - (optional), if specified, restricts the export to interviews modified before the specified date, for example: \textquotedbl\textit{2021-01-01T19:23:43.375Z}\textquotedbl. NB: if option \textit{to()} is specified, then option \textit{from()} must also be specified.
+    \item \option{qid} - questionnaire identity, for example:
+    \xmpl{"50756294-eca7-4765-b94d-2f607dc049a0\$13"}
+
+    \item \option{saveto} - name of the file to save the exported date, for example:
+    \xmpl{"C:/data/export.zip"}
+
+    \item \option{replace} - (optional) if specified, allows to overwrite the
+    file if it already exists.
+
+    \item \option{translationid} - (optional) GUID of the translation of the
+    questionnaire, for example:
+    \xmpl{"2075f291-eca2-4965-b24d-7f607dc049e2"}
+
+    \item \option{includemeta} - (optional) if specified this option requests
+    meta-information to be included in the export file (specify
+    \textit{"true"} to include, and \textit{"false"} to exclude the metadata).
+    If not specified, the meta-information about the questionnaire
+    (JSON-document, PDF-documents, etc) is excluded.
+
+    \item \option{status} - (optional) filter by interview status. If specified,
+    exported interviews data will be restricted to the data from interviews in
+    that status, otherwise by default the data from all interviews is exported.
+
+    \item \option{exporttype} - (optional) type of data file requested for
+    export, can be one of the data types listed below. For example:
+    \xmpl{Paradata} \newline
+    If not specified, then \textit{"STATA"} is assumed.
+
+    \item \option{from} - (optional), if specified, restricts the export to
+    interviews modified since the specified date, for example:
+    \xmpl{"2021-01-01T19:23:43.375Z"} \newline
+    NB: if option \option{from()} is specified, then option \option{to()} must
+    also be specified.
+
+    \item \option{to} - (optional), if specified, restricts the export to
+    interviews modified before the specified date, for example:
+    \xmpl{"2021-01-01T19:23:43.375Z"} \newline
+    NB: if option \option{to()} is specified, then option \option{from()} must
+    also be specified.
+
 \end{itemize}
 
 \textbf{Data types for export files:}
 \begin{compactitem}
-    \item "Tabular" - tab-delimited survey data (*.tab);
-    \item "STATA" - survey data in Stata format (*.dta);
-    \item "SPSS" - survey data in SPSS format (*.sav);
-    \item "Binary" - binary survey data (images, audio recordings);
-    \item "DDI" - DDI descriptor of the data;
-    \item "Paradata" - survey paradata.
+    \item \statacmd{"Tabular"} - tab-delimited survey data (*.tab);
+    \item \statacmd{"STATA"} - survey data in Stata format (*.dta);
+    \item \statacmd{"SPSS"} - survey data in SPSS format (*.sav);
+    \item \statacmd{"Binary"} - binary survey data (images, audio recordings);
+    \item \statacmd{"DDI"} - DDI descriptor of the data;
+    \item \statacmd{"Paradata"} - survey paradata.
 \end{compactitem}
 
 \par
 \vskip24pt
 \textbf{Statuses for the status filter:}
 \begin{compactitem}
-    \item "All"
-    \item "InterviewerAssigned"
-    \item  "Completed"
-    \item "ApprovedBySupervisor"
-    \item "ApprovedByHeadquarters"
+    \item \statacmd{"All"}
+    \item \statacmd{"InterviewerAssigned"}
+    \item \statacmd{"Completed"}
+    \item \statacmd{"ApprovedBySupervisor"}
+    \item \statacmd{"ApprovedByHeadquarters"}
 \end{compactitem}

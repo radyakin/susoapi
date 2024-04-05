@@ -10,9 +10,11 @@ queries already after the initialization of the API client, if necessary:
 
 \vskip16pt
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .s.username="admin"
 .s.password="Some123Secret"
+
 \end{lstlisting}
 
 Note also, that the administrator always has access to all the workspaces on
@@ -21,71 +23,106 @@ the server.
 
 \subsection{Obtain list of workspaces}
 
-\begin{lstlisting}[style=CommandLineStyle]
-.workspaces_list , [frame()] [userguid()] [includedisabled]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.workspaces_list ,
+    [frame()] [userguid()] [includedisabled]
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
+
   \item \option{frame()} - (optional) name of the frame where the list of the
-        workspaces must be saved, for example: \textit{frame("wspaces")}.
+        workspaces must be saved, for example:
+        \xmpl{"wspaces"}
+
   \item \option{userguid()} - (optional) GUID of the user, if specified the
-        list will include only the workspaces, to which this user is granted
-        access to.
+        list will include only the workspaces, to which the specified user is
+        granted access to.
+
   \item \option{includedisabled} - (optional), if specified the list will also
         include disabled workspaces; if not specified, then only enabled
         workspaces.
+
 \end{itemize}
 
 \textbf{Workspaces list frame data structure}
 
 \begin{compactitem}
-    \datafield{string name } (for example, "\textit{census}")
-    \datafield{string display\_name } (for example, "\textit{Population Census 2021}")
-    \datafield{string disabled\_at\_utc } (for example, "\textit{2020-10-05T15:33:30.317233Z}")
+
+    \datafield{string name }  - workspace name, for example:
+    \xmpl{"census"}
+
+    \datafield{string display\_name } - workspace display name, for example:
+    \xmpl{"Population Census 2021"}
+
+    \datafield{string disabled\_at\_utc } - date and time when the workspace
+    was disabled, in UTC, for example:
+    \xmpl{"2020-10-05T15:33:30.317233Z"}
+
 \end{compactitem}
+
 *NB: The exact storage types of the string variables depend on the content
      length and may vary.
 
 
 \subsection{Get details of a workspace}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_getdetails name
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-\item \option{name} - name of the workspace, for example: \textit{lfs}.
+
+    \item \option{name} - name of the workspace, for example:
+    \xmpl{lfs}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
-    \item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+    \item Error \ecode{5001} is returned if the workspace \textit{name} is
+    not specified.
 \end{itemize}
 
 \savedres
 \begin{compactitem}
-    \item r(Name) - specified name of the workspace.
-    \item r(DisplayName) - display name that is attributed to this workspace.
-    \item r(DisabledAtUtc) - blank for workspaces that are not disabled, for
-    disabled workspaces timestamp indicating when the workspace was disabled.
+
+    \item \savedresult{r(Name)} - specified name of the workspace.
+
+    \item \savedresult{r(DisplayName)} - display name that is attributed to
+    this workspace.
+
+    \item \savedresult{r(DisabledAtUtc)} - blank for workspaces that are not
+    disabled, for disabled workspaces timestamp indicating when the workspace
+    was disabled.
+
 \end{compactitem}
 
 
 \subsection{*Create a workspace}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_update name [title]
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-  \item \option{name} - name of the new workspace, for example: \textit{lfs}.
-  \item \option{title} - title of the new workspace, for example:
-        \textit{"Labour force survey 2021q4"}. The title is optional. The name
-        of the workspace will be used also as a title if the title is not
+
+  \item \option{name} - name of the new workspace, for example:
+  \xmpl{lfs}
+
+  \item \option{title} - (optional) the title of the new workspace, for example:
+        \xmpl{"Labour force survey 2021q4"}\newline
+        The name of the workspace will be used as the title if no title is
         specified.
+
 \end{itemize}
 
 \errheader
@@ -97,37 +134,51 @@ the server.
 
 \subsection{*Delete a workspace}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_delete name , irreversible
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-  \item \option{name} - name of the workspace to be deleted, for example: \textit{lfs}.
+
+  \item \option{name} - name of the workspace to be deleted, for example:
+  \xmpl{lfs}
+
   \item \option{irreversible} - literally the word \textit{irreversible}. This
-        option is not optional. The user must understand that the command he
-        issues may cause irreversible damage.
+        option is not optional! By issuing this option the user confirms that
+        the command may cause irreversible loss of data.
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
+
    \item Error \ecode{5001} is returned if the workspace \textit{name} is
          not specified.
+
    \item Error \ecode{198} is returned if the option \textit{irreversible} is
          not specified.
+
 \end{itemize}
 
 
 \subsection{*Obtain workspace status}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_status name
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
+
   \item \option{name} - name of the workspace the status of which is to be
-        examined, for example: \textit{lfs}.
+        examined, for example:
+  \xmpl{lfs}
+
 \end{itemize}
 
 \errheader
@@ -138,58 +189,84 @@ the server.
 
 \savedres
 \begin{compactitem}
-    \item r(WorkspaceName) - specified name of the workspace, for Example:
-          \textit{"census"}.
-    \item r(WorkspaceDisplayName) - display name that is attributed to this
-          workspace, for example: \textit{"Population Census 2021"}.
-    \item r(CanBeDeleted) - an flag indicating whether the workspace may be
-          deleted (1) or not (0).
-    \item r(ExistingQuestionnairesCount) - number of questionnaires that are
-          imported to this workspace.
-    \item r(InterviewersCount) - number of interviewer accounts in this
-          workspace.
-    \item r(SupervisorsCount) - number of supervisor accounts in this workspace.
-    \item r(MapsCount) - number of maps in this workspace.
+
+    \item \savedresult{r(WorkspaceName)} - specified name of the workspace,
+          for example:
+          \xmpl{"census"}
+
+    \item \savedresult{r(WorkspaceDisplayName)} - display name that is
+          attributed to this workspace, for example:
+          \xmpl{"Population Census 2021"}
+
+    \item \savedresult{r(CanBeDeleted)} - a flag indicating whether the
+          workspace may be deleted (returned value is 1) or not (returned value
+          is 0).
+
+    \item \savedresult{r(ExistingQuestionnairesCount)} - number of
+          questionnaires that are imported to this workspace.
+
+    \item \savedresult{r(InterviewersCount)} - number of interviewer accounts
+          in this workspace.
+
+    \item \savedresult{r(SupervisorsCount)} - number of supervisor accounts in
+          this workspace.
+
+    \item \savedresult{r(MapsCount)} - number of maps in this workspace.
+
 \end{compactitem}
 
 
 \subsection{*Disable a workspace}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_disable name
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-\item \option{name} - name of the workspace, for example: \textit{lfs}.
+
+    \item \option{name} - name of the workspace, for example:
+    \xmpl{lfs}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
-\item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+    \item Error \ecode{5001} is returned if the workspace \textit{name} is
+    not specified.
 \end{itemize}
 
 \subsection{*Enable a workspace}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_enable name
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-\item \option{name} - name of the workspace, for example: \textit{lfs}.
+
+    \item \option{name} - name of the workspace, for example:
+    \xmpl{lfs}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
-\item Error \ecode{5001} is returned if the workspace \textit{name} is not specified.
+    \item Error \ecode{5001} is returned if the workspace \textit{name} is
+    not specified.
 \end{itemize}
 
 
 \subsection{*Assign users to workspaces}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .workspaces_assign mode, users() workspaces()
+
 \end{lstlisting}
 
 \vskip10pt
@@ -209,20 +286,18 @@ The \textbf{mode} can be one of the following:
 \optsheader
 
 \begin{itemize}
-  \item \option{users()} - one or more user account names, for example:
-        \textit{frame("SergiyInt")}. Multiple account names must be delimited
-        with spaces, like so: \textit{frame("SergiyInt SandraSup")}.
-  \item \option{workspaces()} - one or more names of the workspaces, for
-        example: \textit{"agcensus"}. Multiple workspace names must be
-        delimited with spaces, like so: \textit{"census lfs pricesvy"}.
-\end{itemize}
 
-\errheader
-\begin{itemize}
-   \item Error \ecode{5001} is returned if the \textit{workspaces()} is
-         not specified.
-   \item Error \ecode{5002} is returned if the \textit{users()} is
-         not specified.
+  \item \option{users()} - one or more user account names, for example:
+        \xmpl{"SergiyInt"} \newline
+        Multiple account names must be delimited with spaces, like so:
+        \xmpl{"SergiyInt SandraSup"}
+
+  \item \option{workspaces()} - one or more names of the workspaces, for
+        example:
+        \xmpl{"agcensus"} \newline
+        Multiple workspace names must be delimited with spaces, like so: \newline
+        \xmpl{"census lfs pricesvy"}
+
 \end{itemize}
 
 \subsection{Update a workspace title}
@@ -233,8 +308,13 @@ The \textbf{mode} can be one of the following:
 
 \paramsheader
 \begin{itemize}
-  \item \option{name} - name of the workspace, for example: \textit{lfs}.
-  \item \option{title} - new title of the workspace, for example: \textit{"Labour force survey 2021q4"}.
+
+  \item \option{name} - name of the workspace, for example:
+  \xmpl{lfs}
+
+  \item \option{title} - new title of the workspace, for example:
+  \xmpl{"Labour force survey 2021q4"}
+
 \end{itemize}
 
 \errheader

@@ -20,9 +20,13 @@ As a result of execution of this method, the following properties of the API-cli
 
 
 \subsection{Create a user account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
-.users_create, role() username() password() [supervisor()]
-                     [ fullname() phonenumber() email() ]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.users_create,
+    role() username() password()
+    [supervisor()]
+    [fullname() phonenumber() email()]
+
 \end{lstlisting}
 
 \optsheader
@@ -49,8 +53,10 @@ As a result of execution of this method, the following properties of the API-cli
 \end{compactitem}
 
 \subsection{Get the details of a user account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_user guid
+
 \end{lstlisting}
 
 \paramsheader
@@ -60,20 +66,22 @@ As a result of execution of this method, the following properties of the API-cli
 
 \savedres
 \begin{compactitem}
-    \item r(UserId) - account GUID as specified in the query
-    \item r(UserName) - account name corresponding to the specified GUID
-    \item r(Role) - account role in the system
-    \item r(FullName) - full name of the user (if specified)
-    \item r(Email) - contact email of the user (if specified)
-    \item r(PhoneNumber) - contact phone number of the user (if specified)
-    \item r(CreationDate) - date when the account was created
-    \item r(isArchived) - (1=archived; 0=not archived)
-    \item r(isLocked) - (1=locked; 0=not locked)
+    \item \savedresult{r(UserId)} - account GUID as specified in the query
+    \item \savedresult{r(UserName)} - account name corresponding to the specified GUID
+    \item \savedresult{r(Role)} - account role in the system
+    \item \savedresult{r(FullName)} - full name of the user (if specified)
+    \item \savedresult{r(Email)} - contact email of the user (if specified)
+    \item \savedresult{r(PhoneNumber)} - contact phone number of the user (if specified)
+    \item \savedresult{r(CreationDate)} - date when the account was created
+    \item \savedresult{r(isArchived)} - (1=archived; 0=not archived)
+    \item \savedresult{r(isLocked)} - (1=locked; 0=not locked)
 \end{compactitem}
 
 \subsection{Get the details of a supervisor account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_supervisor guid
+
 \end{lstlisting}
 
 \paramsheader
@@ -83,19 +91,21 @@ As a result of execution of this method, the following properties of the API-cli
 
 \savedres
 \begin{compactitem}
-    \item r(UserName) - account name corresponding to the specified GUID
-    \item r(FullName) - full name of the user (if specified)
-    \item r(Email) - contact email of the user (if specified)
-    \item r(PhoneNumber) - contact phone number of the user (if specified)
-    \item r(CreationDate) - date when the account was created
-    \item r(isArchived) - (1=archived; 0=not archived)
-    \item r(isLocked) - (1=locked; 0=not locked)
+    \item \savedresult{r(UserName)} - account name corresponding to the specified GUID
+    \item \savedresult{r(FullName)} - full name of the user (if specified)
+    \item \savedresult{r(Email)} - contact email of the user (if specified)
+    \item \savedresult{r(PhoneNumber)} - contact phone number of the user (if specified)
+    \item \savedresult{r(CreationDate)} - date when the account was created
+    \item \savedresult{r(isArchived)} - (1=archived; 0=not archived)
+    \item \savedresult{r(isLocked)} - (1=locked; 0=not locked)
 \end{compactitem}
 
 
 \subsection{Get the details of an interviewer account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_interviewer guid
+
 \end{lstlisting}
 
 \paramsheader
@@ -105,17 +115,17 @@ As a result of execution of this method, the following properties of the API-cli
 
 \savedres
 \begin{compactitem}
-    \item r(UserName) - account name corresponding to the specified GUID
-    \item r(SupervisorName) - account name of the supervisor of this interviewer
-    \item r(SupervisorId) - account GUID of the supervisor of this interviewer
-    \item r(FullName) - full name of the interviewer (if specified)
-    \item r(Email) - contact email of the interviwer (if specified)
-    \item r(PhoneNumber) - contact phone number of the interviewer (if specified)
-    \item r(CreationDate) - date when the account was created
-    \item r(isArchived) - (1=archived; 0=not archived)
-    \item r(isLocked) - (1=locked; 0=not locked)
-    \item r(isLockedBySupervisor) - (1=locked; 0=not locked)
-    \item r(isLockedByHeadquarters) - (1=locked; 0=not locked)
+    \item \savedresult{r(UserName)} - account name corresponding to the specified GUID
+    \item \savedresult{r(SupervisorName)} - account name of the supervisor of this interviewer
+    \item \savedresult{r(SupervisorId)} - account GUID of the supervisor of this interviewer
+    \item \savedresult{r(FullName)} - full name of the interviewer (if specified)
+    \item \savedresult{r(Email)} - contact email of the interviwer (if specified)
+    \item \savedresult{r(PhoneNumber)} - contact phone number of the interviewer (if specified)
+    \item \savedresult{r(CreationDate)} - date when the account was created
+    \item \savedresult{r(isArchived)} - (1=archived; 0=not archived)
+    \item \savedresult{r(isLocked)} - (1=locked; 0=not locked)
+    \item \savedresult{r(isLockedBySupervisor)} - (1=locked; 0=not locked)
+    \item \savedresult{r(isLockedByHeadquarters)} - (1=locked; 0=not locked)
 \end{compactitem}
 
 \subsection{Get the list of the supervisor accounts on the server}
@@ -125,7 +135,10 @@ As a result of execution of this method, the following properties of the API-cli
 
 \paramsheader
 \begin{itemize}
-\item \option{frame} - (optional) frame name to save the list of supervisors. If not specified, the current frame will be used.
+
+    \item \option{frame} - (optional) frame name to save the list of supervisors.
+    If not specified, the current frame will be used.
+
 \end{itemize}
 \textbf{Supervisors list frame data structure}
 
@@ -137,15 +150,19 @@ As a result of execution of this method, the following properties of the API-cli
 \end{compactitem}
 
 \subsection{Get the list of interviewer accounts in a team}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_interviewers guid frame
+
 \end{lstlisting}
+
 Retrives the list of interviewer accounts in a team of a particular supervisor.
 
 \paramsheader
 \begin{itemize}
   \item \option{guid} - GUID of the supervisor/team.
-  \item \option{frame} - (optional) name of the frame to be created for the list of the interviewers.
+  \item \option{frame} - (optional) name of the frame to be created for the
+  list of the interviewers.
 \end{itemize}
 
 \textbf{Supervisors list frame data structure}
@@ -159,38 +176,66 @@ Retrives the list of interviewer accounts in a team of a particular supervisor.
 
 
 \subsection{Archive a user account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_archive guid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-      \item \option{guid} - GUID of the user account on the server to be archived.
+      \item \option{guid} - GUID of the user account on the server to be
+      archived.
 \end{itemize}
 
 
 \subsection{Unarchive a user account on the server}
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .users_unarchive guid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-      \item \option{guid} - GUID of the user account on the server to be unarchived.
+
+      \item \option{guid} - GUID of the user account on the server to be
+      unarchived.
+
 \end{itemize}
 
 
 \subsection{Obtain a detailed actions log for an interviewer account}
-\begin{lstlisting}[style=CommandLineStyle]
-.users_actionslog, user() [ framename() from() to() ]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.users_actionslog , user()
+    [framename() from() to() ]
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
-      \item \option{user} - GUID of the interviewer account on the server, for which the detailed actions log is requested. For example, \textit{user(b361cc01-da5d-432e-b926-799f73c7e198)}.
-      \item \option{framename} - (optional) if specified, the detailed actions log will be placed in this new frame, otherwise the log will be placed into the current frame.
-      \item \option{from} - (optional), if specified restricts the detailed actions log to start from this date. Example: \textit{from(2019-01-13T14:48:58Z)}. NB: if option \textit{from()} is specified, then option \textit{to()} must also be specified.
-      \item \option{to} - (optional), if specified restricts the detailed actions log to end on this date. Example: \textit{to(2021-01-13T14:48:59Z)}. NB: if option \textit{to()} is specified, then option \textit{from()} must also be specified.
+
+      \item \option{user} - GUID of the interviewer account on the server, for
+      which the detailed actions log is requested. For example:
+      \xmpl{"b361cc01-da5d-432e-b926-799f73c7e198"}
+
+      \item \option{framename} - (optional) if specified, the detailed actions
+      log will be placed in this new frame, otherwise the log will be placed
+      into the current frame
+
+      \item \option{from} - (optional), if specified restricts the detailed
+      actions log to start from this date. For example:
+      \xmpl{"2019-01-13T14:48:58Z"}\newline
+      NB: if option \option{from()} is specified, then option \option{to()}
+      must also be specified.
+
+      \item \option{to} - (optional), if specified restricts the detailed
+      actions log to end on this date. For example:
+      \xmpl{"2021-01-13T14:48:59Z"} \newline
+      NB: if option \option{to()} is specified, then option \option{from()}
+      must also be specified.
+
 \end{itemize}
 
 \textbf{Detailed actions log frame data structure}

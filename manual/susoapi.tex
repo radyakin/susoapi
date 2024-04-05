@@ -11,9 +11,11 @@
 \usepackage{xstring}
 \usepackage{stringstrings}
 \usepackage{changepage}
+\usepackage{titlesec}
 \usepackage[hidelinks]{hyperref}
 \definecolor{lstback}{RGB}{170, 220, 255}
-
+%\usepackage{blindtext}
+%\usepackage[scaled=.50]{helvet}
 \usepackage[final]{listings}
 \lstset{backgroundcolor=\color{lstback}}
 
@@ -23,11 +25,12 @@
   upquote=true % ensure that backtick displays correctly
 }
 
-\usepackage[margin=0.75in]{geometry}
+\usepackage[a5paper, margin=0.4in, bottom=0.6in]{geometry}
+
 \definecolor{syntaxcolor}{rgb}{0.6, 0, 0}
+\definecolor{savedrescolor}{rgb}{0, 0.6, 0.4}
 \definecolor{ecodecolor}{rgb}{1.0, 0.7, 0.7}
 \sethlcolor{ecodecolor}
-
 
 \newcommand{\minorheader}[1]{\vskip16pt{\color{ForestGreen}\textbf{#1}}}
 \newcommand{\paramsheader}{\minorheader{Parameters}}
@@ -41,7 +44,7 @@
   \ifdefined\BRIEF
   \else
   \begin{center}
-      \includegraphics[width=170mm]{images/resized/#1}
+      \includegraphics[width=\textwidth]{images/resized/#1}
   \end{center}
   \fi
 }
@@ -50,12 +53,20 @@
       \textbf{{\color{syntaxcolor}\texttt{#1}}}
 }
 
+\newcommand{\glossitem}[1]{
+      \vskip8pt
+      \textbf{{\color{syntaxcolor}\texttt{#1}}}
+}
+
 \newcommand{\option}[1]{{\color{syntaxcolor}\texttt{#1}}}
+\newcommand{\savedresult}[1]{\vskip8pt{\color{savedrescolor}\texttt{#1}}}
+\newcommand{\xmpl}[1]{\newline{\color{gray}\textit{\small#1\normalsize}}}
 
 \let\oldsection\section
 \renewcommand\section{\clearpage\oldsection}
 
 \newcommand{\datafield}[1]{
+    \vskip3pt
     \item[$\diamond$]
     {\color{blue}
       \textit{\getaword{#1}{1}}
@@ -66,8 +77,16 @@
 }
 
 
+\titleformat{\section}
+  {\normalfont\sffamily\Large\bfseries\color{cyan}}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\sffamily\large\bfseries\color{cyan}}
+  {\thesubsection}{1em}{}
+
 \begin{document}
-% \fontfamily{phv}\selectfont
+ \fontfamily{phv}\selectfont
 
 
 \begin{titlepage}
@@ -85,18 +104,18 @@
 \end{titlepage}
 
 \tableofcontents
-  \input{s_client.tex}
-  \input{s_questionnaires.tex}
-  \input{s_assignments.tex}
-  \input{s_interviews.tex}
-  \input{s_export.tex}
-  \input{s_maps.tex}
-  \input{s_notice.tex}
-  \input{s_users.tex}
-  \input{s_calendar.tex}
-  \input{s_workspaces.tex}
-  \input{s_credits.tex}
-  \input{s_http_codes.tex}
-  \input{s_glossary.tex}
+    \input{s_client.tex}
+    \input{s_questionnaires.tex}
+    \input{s_assignments.tex}
+    \input{s_interviews.tex}
+    \input{s_export.tex}
+    \input{s_maps.tex}
+    \input{s_notice.tex}
+    \input{s_users.tex}
+    \input{s_calendar.tex}
+    \input{s_workspaces.tex}
+    \input{s_credits.tex}
+    \input{s_http_codes.tex}
+    \input{s_glossary.tex}
 
 \end{document}

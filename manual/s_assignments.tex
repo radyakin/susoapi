@@ -6,87 +6,158 @@
 
 
 \subsection{Get a list of assignments on the server}
-\begin{lstlisting}[style=CommandLineStyle]
-.get_assignments, [qguid(string) qversion(integer)]
-                  [responsible(string) supervisorid(string)]
-                  [showarchive frame(string)]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.get_assignments ,
+  [qguid(string) qversion(integer)]
+  [responsible(string) supervisorid(string)]
+  [showarchive frame(string)]
 
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
-  \item \option{qguid} - questionnaire GUID identifier (optional, if not specified, no filtering by questionnaire or version is done).
-  \item \option{qversion} - questionnaire version (optional, if not specified 1 is assumed, only effective when questionnaire GUID is specified).
+
+  \item \option{qguid} - questionnaire GUID identifier (optional, if not
+  specified, no filtering by questionnaire or version is done).
+
+  \item \option{qversion} - questionnaire version (optional, if not specified 1
+  is assumed, only effective when questionnaire GUID is specified).
+
   \item \option{responsible} - optional responsible name or GUID.
+
   \item \option{supervisorid} - optional supervisor GUID (not username).
-  \item \option{showarchive} - regulates whether to search among active assignments (when this option is not specified, default) or archived assignments (when this option is specified).
-  \item \option{frame} - (optional) name of the frame to save the list of the interviews.
+
+  \item \option{showarchive} - regulates whether to search among active
+  assignments (when this option is not specified, default) or archived
+  assignments (when this option is specified).
+
+  \item \option{frame} - (optional) name of the frame to save the list of the
+  interviews.
+
 \end{itemize}
 
 \structheader{Assignments list}
 \begin{compactitem}
-  \datafield{long id } - for example: \textit{1064};
-  \datafield{str36 responsible\_id } - identifier (GUID) of a person designated responsible
-  for the assignment, for example: \textit{"1e7ef1e1-2123-4b5f-8a34-72ad1c494d1b"};
-  \datafield{strL responsible\_name } - account name of a person designated responsible
-  for the assignment, for example: \textit{"Natalia"};
-  \datafield{strL questionnaireid } - for example: \textit{"8f1286c40c90475a9100b618584410b6\$1"};
-  \datafield{long interviews\_count } - number of interviews assignment calls for, for example: \textit{10};
-  \datafield{long quantity } - for example \textit{1};
-  \datafield{byte archived } - 1 if the assignment is archived, 0 if not archived (active), for example \textit{0};
-  \datafield{strL created\_at\_utc } - timestamp for when the assignment was created, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
-  \datafield{strL updated\_at\_utc } - timestamp for when the assignment was last updated, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
-  \datafield{strL email } - (for web assignments only) the email of the assignment recipient (respondent), for example: \textit{"somebody@somewhere.org"};
-  \datafield{strL password } - (for web assignments only) the password to open the assignment (begin interview), for example: \textit{"PASS1234"};
-  \datafield{byte webmode } - flag which indicates if the assignment is a web assignment (value is 1), or not (value is 0), for example: \textit{1};
-  \datafield{strL received\_by\_tablet\_at\_utc } - timestamp for when the assignment was received by a mobile device, in UTC, for example: \textit{"2024-03-19T23:48:04.358641Z"};
-  \datafield{byte is\_audio\_recording\_enabled } - 1 if audio audit is enabled for the assignment, 0 if not enabled, for example: \textit{0};
+
+  \datafield{long id } - for example:
+  \xmpl{1064}
+
+  \datafield{str36 responsible\_id } - identifier (GUID) of a person designated
+  responsible for the assignment, for example:
+  \xmpl{"1e7ef1e1-2123-4b5f-8a34-72ad1c494d1b"}
+
+  \datafield{strL responsible\_name } - account name of a person designated
+  responsible for the assignment, for example:
+  \xmpl{"Natalia"}
+
+  \datafield{strL questionnaireid } - for example:
+  \xmpl{"8f1286c40c90475a9100b618584410b6\$1"}
+
+  \datafield{long interviews\_count } - number of interviews assignment calls
+  for, for example:
+  \xmpl{10}
+
+  \datafield{long quantity } - for example:
+  \xmpl{1}
+
+  \datafield{byte archived } - 1 if the assignment is archived, 0 if not
+  archived (active), for example:
+  \xmpl{0}
+
+  \datafield{strL created\_at\_utc } - timestamp for when the assignment was
+  created, in UTC, for example:
+  \xmpl{"2024-03-19T23:48:04.358641Z"}
+
+  \datafield{strL updated\_at\_utc } - timestamp for when the assignment was
+  last updated, in UTC, for example:
+  \xmpl{"2024-03-19T23:48:04.358641Z"}
+
+  \datafield{strL email } - (for web assignments only) the email of the
+  assignment recipient (respondent), for example:
+  \xmpl{"somebody@somewhere.org"}
+
+  \datafield{strL password } - (for web assignments only) the password to open
+  the assignment (begin interview), for example:
+  \xmpl{"PASS1234"}
+
+  \datafield{byte webmode } - flag which indicates if the assignment is a web
+  assignment (value is 1), or not (value is 0), for example:
+  \xmpl{1}
+
+  \datafield{strL received\_by\_tablet\_at\_utc } - timestamp for when the
+  assignment was received by a mobile device, in UTC, for example:
+  \xmpl{"2024-03-19T23:48:04.358641Z"}
+
+  \datafield{byte is\_audio\_recording\_enabled } - 1 if audio audit is enabled
+  for the assignment, 0 if not enabled, for example:
+  \xmpl{0}
+
 \end{compactitem}
 
 
 \subsection{Get details of an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_getdetails assignmentid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
     \item \option{assignmentid} - numeric identifier of the assignment, for
-    example: \textit{1007}.
+    example:
+    \xmpl{1007}
 \end{itemize}
 
 \savedres
 \begin{compactitem}
-    \item r(CreatedAtUtc) - timestamp (date and time) of the creation of this
-    assignment (in UTC), for example: \textit{"2021-05-17T14:41:46.824627Z"}.
-    \item r(UpdatedAtUtc) - timestamp (date and time) of the last update (in
-    UTC), for example: \textit{"2021-05-27T20:45:39.778723Z"}.
-    \item r(QuestionnaireId)  - identity of the questionnaire on which this
-    assignment is based. Identity is the questionnaire GUID and version
-    separated with the \$ sign, for example: \newline
-    \textit{"0434573c67b34d93b1f0799fb042f9e6\$1"}.
-    \item r(ResponsibleName) - login name of the current responsible user,
-    for example: \textit{"Natalia"}.
-    \item r(ResponsibleId) - GUID of the current responsible user, for example:
-    \textit{"71dc5a0f-6557-4945-9b86-0197699ee475"}.
+
+    \item \savedresult{r(CreatedAtUtc)} - timestamp (date and time) of the
+    creation of this assignment (in UTC), for example:
+    \xmpl{"2021-05-17T14:41:46.824627Z"}
+
+    \item \savedresult{r(UpdatedAtUtc)} - timestamp (date and time) of the last
+    update (in UTC), for example:
+    \xmpl{"2021-05-27T20:45:39.778723Z"}
+
+    \item \savedresult{r(QuestionnaireId)}  - identity of the questionnaire on
+    which this assignment is based, for example:
+    \xmpl{"0434573c67b34d93b1f0799fb042f9e6\$1"}
+
+    \item \savedresult{r(ResponsibleName)} - login name of the current
+    responsible user, for example:
+    \xmpl{"Natalia"}
+
+    \item \savedresult{r(ResponsibleId)} - GUID of the current responsible user,
+    for example:
+    \xmpl{"71dc5a0f-6557-4945-9b86-0197699ee475"}
+
 \end{compactitem}
 
 \vskip16pt
 Additionally, for each identifying question, \#=1,2,...:
 \begin{compactitem}
-    \item r(id\_guid\#) - internally assigned GUID of the question,
-    for example: \newline \textit{"c03979a9157304fcfa9bc1d3988433d7"}.
-    \item r(id\_variable\#) - variable name for the question,
-    for example: \textit{"province"}.
-    \item r(id\_answer\#) - recorded answer to the identifying question,
-    for example: \textit{"Northern province"}.
+
+    \item \savedresult{r(id\_guid\#)} - internally assigned GUID of the question,
+    for example:
+    \xmpl{"c03979a9157304fcfa9bc1d3988433d7"}
+
+    \item \savedresult{r(id\_variable\#)} - variable name for the question,
+    for example:
+    \xmpl{"province"}
+
+    \item \savedresult{r(id\_answer\#)} - recorded answer to the identifying
+    question, for example:
+    \xmpl{"Northern province"}
+
 \end{compactitem}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
     \item Error \ecode{-10404} is returned if an assignment with \textit{assignmentid} is not found on the server.
@@ -101,15 +172,22 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
-    \item \option{responsiblelogin} - account name of the new responsible, for example: \textit{"Maryna"}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
+    \item \option{responsiblelogin} - account name of the new responsible, for
+    example:
+    \xmpl{"Maryna"}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{responsiblelogin} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -124,13 +202,17 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -139,19 +221,24 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Unarchive an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_unarchive assignmentid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for example:
+    \xmpl{1007}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -159,19 +246,25 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Close an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_close assignmentid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
 \end{itemize}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -180,14 +273,22 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Change quantity for an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_changequantity assignmentid number
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
-    \item \option{number} - new quantity for the assignment, for example: \textit{10}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
+    \item \option{number} - new quantity for the assignment, for example:
+    \xmpl{10}
+
 \end{itemize}
 
 \errheader
@@ -195,7 +296,7 @@ Additionally, for each identifying question, \#=1,2,...:
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{number} is not specified.
     \item Error \ecode{5003} is returned if the \textit{number} is invalid (must be an integer, more than 0, 0, or -1).
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -203,26 +304,34 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Get quantity setting for an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_getquantitysettings assignmentid
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
-    \item \option{number} - new quantity for the assignment, for example: \textit{10}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
+    \item \option{number} - new quantity for the assignment, for example:
+    \xmpl{10}
+
 \end{itemize}
 
 \savedres
 \begin{compactitem}
-    \item r(can\_change\_quantity) - numeric 1=quantity can be changed or 0=quantity cannot be changed.
-    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+    \item \savedresult{r(can\_change\_quantity)} - numeric 1=quantity can be changed or 0=quantity cannot be changed.
+    \item \savedresult{r(status\_code)}  - numeric status code for API query (successful completion is indicated by code 200).
 \end{compactitem}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
@@ -230,8 +339,10 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Get audio audit status for an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_getaudio assignmentid
+
 \end{lstlisting}
 
 \paramsheader
@@ -241,8 +352,8 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \savedres
 \begin{compactitem}
-    \item r(record\_audio) - numeric 1=ON or 0=OFF.
-    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+    \item \savedresult{r(record\_audio)} - numeric 1=ON or 0=OFF.
+    \item \savedresult{r(status\_code)}  - numeric status code for API query. Successful completion is indicated by code 200.
 \end{compactitem}
 
 \errheader
@@ -255,88 +366,128 @@ Additionally, for each identifying question, \#=1,2,...:
 
 \subsection{Set audio audit status for an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_setaudio assignmentid value
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
-    \item \option{value} - numeric value for the audio audit status of the assignment (0=OFF, any other value=ON), for example: \textit{1}.
+
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
+    \item \option{value} - numeric value for the audio audit status of the
+    assignment (0=OFF, any other value=ON), for example:
+    \xmpl{1}
 
 \end{itemize}
 
 \savedres
 \begin{compactitem}
-    \item r(record\_audio) - numeric 1=ON or 0=OFF.
-    \item r(status\_code)  - numeric status code for API query. Successful completion is indicated by code 200.
+    \item \savedresult{r(record\_audio)} - numeric 1=ON or 0=OFF.
+    \item \savedresult{r(status\_code)}  - numeric status code for API query
+    (successful completion is indicated by code 200).
 \end{compactitem}
 
 \errheader
 \begin{itemize}
     \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
     \item Error \ecode{5002} is returned if the \textit{value} of audio audit is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numeric).
     \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
     \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
 \end{itemize}
 
 \subsection{Get assignment's history}
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
 .assignments_history assignmentid frame
+
 \end{lstlisting}
 
 \paramsheader
 \begin{itemize}
-    \item \option{assignmentid} - numeric identifier of the assignment, for example: \textit{1007}.
-    \item \option{framename} - (optional) frame name where to save the assignment history, for example: \textit{"history"}. If not specified, the history is saved to the current frame.
+    \item \option{assignmentid} - numeric identifier of the assignment, for
+    example:
+    \xmpl{1007}
+
+    \item \option{framename} - (optional) frame name where to save the
+    assignment history, for example:
+    \xmpl{"history"}\newline
+    If not specified, the history is saved to the current frame.
 
 \end{itemize}
 
 \structheader{Assignment history}
 
 \begin{compactitem}
-    \datafield{str32 utc\_date } (for example, "\textit{2020-10-05T15:33:30.317233Z}")
-    \datafield{str32 action } (for example, "\textit{Created}")
-    \datafield{str32 actor\_name } (for example, "\textit{ValeriaHQ}")
-    \datafield{strL additional\_data } (for example, "\textit{\{'Comment': None, 'Responsible': 'SergiyInt'\}}")
+    \datafield{str32 utc\_date } - timestamp when the action was taken, for
+    example:
+    \xmpl{"2020-10-05T15:33:30.317233Z"}
+
+    \datafield{str32 action } - action type, for example:
+    \xmpl{"Created"}
+
+    \datafield{str32 actor\_name } - login of the actor that took the action,
+    for example:
+    \xmpl{"ValeriaHQ"}
+
+    \datafield{strL additional\_data } - additional data that may or may not be
+    present depending on the type of the action, for example:
+    \xmpl{"\{'Comment': None, 'Responsible': 'SergiyInt'\}"}
+
 \end{compactitem}
 
 \errheader
 \begin{itemize}
-    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not specified.
-    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a number (expected to be numberic).
-    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1 or more (expected to be 1 or a larger value).
-    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an integer (expected to be an integer).
-    \item Error \ecode{-10404} is returned if the assignment with \textit{assignmentid} is not found on the server.
+    \item Error \ecode{5001} is returned if the \textit{assignmentid} is not
+    specified.
+    \item Error \ecode{5101} is returned if the \textit{assignmentid} is not a
+    number (expected to be numberic).
+    \item Error \ecode{5102} is returned if the \textit{assignmentid} is not 1
+    or more (expected to be 1 or a larger value).
+    \item Error \ecode{5103} is returned if the \textit{assignmentid} is not an
+    integer (expected to be an integer).
+    \item Error \ecode{-10404} is returned if the assignment with
+    \textit{assignmentid} is not found on the server.
 \end{itemize}
 
 
 \subsection{Create an assignment}
 
-\begin{lstlisting}[style=CommandLineStyle]
-.assignments_create , responsible() qxguid() [qxversion() quantity()]
-             [email() password() webmode()]
-             [audio() comment() protected() data()]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+.assignments_create ,
+  responsible() qxguid()
+  [qxversion() quantity()]
+  [email() password() webmode()]
+  [audio() comment() protected() data()]
+
 \end{lstlisting}
 
 \optsheader
 \begin{itemize}
 
 \item \option{responsible} - account name of a person designated responsible
-for the assignment, for example: \textit{SergiyInt}. NB: for web interviews the
-responsible must be a user in the interviewer role.
+for the assignment, for example: \newline
+\textit{SergiyInt}\newline
+NB: for web interviews the responsible must be a user in the interviewer role.
 
 \item \option{qxguid()} - GUID of the questionnaire.
 
 \item \option{qxversion()} - (optional) numeric version of the questionnaire
       (as assigned when the questionnaire is imported to the HQ), for example:
-      \textit{2}. When the option is not specified version 1 is implied.
+      \xmpl{2} \newline
+      When the option is not specified version 1 is implied.
 
 \item \option{quantity()} - (optional) quantity of interviews requested in
-      this assignment, for example: \textit{12}. When the option is not
-      specified, quantity 1 is implied.
+      this assignment, for example:
+      \xmpl{12}\newline
+      When the option is not specified, quantity 1 is implied.
 
 \item \option{email()} - (optional) respondent's email for sending the
       invitations and reminders for a web interview.
@@ -366,20 +517,25 @@ responsible must be a user in the interviewer role.
 \item \option{data()} - (optional) output of the \textit{\textbf{.buildvars}}
       method or manually constructed preloading data in the same format, for
       example:
-      \begin{lstlisting}[style=CommandLineStyle]
-        `"{"Variable":"age", "Answer":41}"'
-      \end{lstlisting}
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
+
+`"{"Variable":"age", "Answer":41}"'
+
+\end{lstlisting}
 
 \end{itemize}
 
 
 NB: Remember to use Stata's compound double quotes to envelop the content in
-the \textit{data()} option since it contains quotes of its own:
+the \option{data()} option since it contains quotes of its own:
 
-\begin{lstlisting}[style=CommandLineStyle]
+\begin{lstlisting}[style=CommandLineStyle, showlines=true]
 
-local d = `"{"Variable":"region", "Answer":5}, "' + ///
-  `"{"Variable":"address", "Answer":"1234 Test St., My City, USA"}"'
+local d = ///
+  `"{"Variable":"region", "' + ///
+  `""Answer":5}, "' + ///
+  `"{"Variable":"address", "' + ///
+  `""Answer":"1234 Test St., My City, USA"}"'
 
 .s.assignments_create , ... data (`"`d'"')
 
@@ -388,19 +544,60 @@ local d = `"{"Variable":"region", "Answer":5}, "' + ///
 
 \savedres
 \begin{compactitem}
-    \item r(status\_code) - numeric status code for the HTTP request corresponding to this query, for example \textit{201}; Successful completion is indicated by code 200 or 201.
-    \item r(Id) - numeric assignment ID, for example: \textit{1226612};
-    \item r(InterviewsCount) - number of interviews existing originating from this assignment, (expected always 0) for example: \textit{0};
-    \item r(Archived) - numeric presentation of archival status (1=archived, 0=not archived), (expected always 0, not archived), for example: \textit{0};
-    \item r(WebMode) - numeric presentation of the mode (1=Web mode, 0=Not web mode) for this assignment, for example: \textit{1};
-    \item r(IsAudioRecordingEnabled) - flag whether audio recording is enabled for this assignment (1=ON or 0=OFF), for example: \textit(0);
-    \item r(Email) - email of the web interview respondent, for example: \textit{"test@site.org"};
-    \item r(CreatedAtUtc) - timestamp of the creation of the assignment (in UTC), for example: \textit{"2022-10-18T22:01:11.351222Z"};
-    \item r(UpdatedAtUtc) - timestamp of the last update of the assignment (in UTC), for example: \textit{"2022-10-18T22:01:11.351222Z"}; (expected to be equal to timestamp of creation for newly created assignments);
-    \item r(QuestionnaireId) - identity of the questionnaire (questionnaire ID and version), for example: \textit{"8352f83fe9eb4e48888142402a49ce3e\$1"};
-    \item r(ResponsibleName) - login of the responsible, for example: \textit{"SergiyInt"};
-    \item r(ResponsibleId) - GUID of the responsible, for example: \textit{"7607263d-ad66-4cc6-a175-42d3e6a57745"};
-    \item r(WebInterviewLink) - web link to start an interview from this assignment, for example: \textit{"https://demo.mysurvey.solutions/census/WebInterview/V9FNU9PZ/Start"}.
+
+    \item \savedresult{r(status\_code)} - numeric status code for the HTTP
+    request corresponding to this query, for example:
+    \xmpl{201}\newline
+    (Successful completion is indicated by code 200 or 201)
+
+    \item \savedresult{r(Id)} - numeric assignment ID, for example:
+    \xmpl{1226612}
+
+    \item \savedresult{r(InterviewsCount)} - number of interviews existing
+    originating from this assignment, (expected always 0) for example:
+    \xmpl{0}
+
+    \item \savedresult{r(Archived)} - numeric presentation of archival status
+    (1=archived, 0=not archived), (expected always 0, not archived), for
+    example:
+    \xmpl{0}
+
+    \item \savedresult{r(WebMode)} - numeric presentation of the mode
+    (1=Web mode, 0=Not web mode) for this assignment, for example:
+    \xmpl{1}
+
+    \item \savedresult{r(IsAudioRecordingEnabled)} - flag whether audio
+    recording is enabled for this assignment (1=ON or 0=OFF), for example:
+    \xmpl{0}
+
+    \item \savedresult{r(Email)} - email of the web interview respondent, for
+    example:
+    \xmpl{"test@site.org"}
+
+    \item \savedresult{r(CreatedAtUtc)} - timestamp of the creation of the
+    assignment (in UTC), for example:
+    \xmpl{"2022-10-18T22:01:11.351222Z"}
+
+    \item \savedresult{r(UpdatedAtUtc)} - timestamp of the last update of the
+    assignment (in UTC), for example:
+    \xmpl{"2022-10-18T22:01:11.351222Z"}\newline
+    (expected to be equal to timestamp of creation for newly created assignments)
+
+    \item \savedresult{r(QuestionnaireId)} - identity of the questionnaire, for
+    example:
+    \xmpl{"8352f83fe9eb4e48888142402a49ce3e\$1"}
+
+    \item \savedresult{r(ResponsibleName)} - login of the responsible, for
+    example:
+    \xmpl{"SergiyInt"}
+
+    \item \savedresult{r(ResponsibleId)} - GUID of the responsible, for example:
+    \xmpl{"7607263d-ad66-4cc6-a175-42d3e6a57745"}
+
+    \item \savedresult{r(WebInterviewLink)} - web link to start an interview
+    from this assignment, for example:
+    \xmpl{"https://demo.mysurvey.solutions/census/WebInterview/V9FNU9PZ/Start"}
+
 \end{compactitem}
 
 \errheader
