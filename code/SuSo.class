@@ -40,8 +40,9 @@ from importlib.metadata import version
 from sfi import Macro, Data, Scalar, SFIToolkit
 
 # // Python globals:
-ajheader={'Content-type': 'application/json'}
-ajpheader={'Content-type': 'application/json-patch+json'}
+signature="python-susoapi/{}".format(wrapperver)
+ajheader={'User-Agent': signature, 'Content-type': 'application/json'}
+ajpheader={'User-Agent': signature, 'Content-type': 'application/json-patch+json'}
 
 
 class TokenAuth(requests.auth.AuthBase):
