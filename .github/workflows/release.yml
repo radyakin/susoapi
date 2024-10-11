@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  generate-checksums:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Download release artifacts
+      run: |
+        gh release download ${{ github.event.release.tag_name }} --clobber
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate checksums
+      run: |
+        for file in *; do
+          if [ -f "$file" ]; then
+            sha256sum "$file" > "$file.sha256"
+          fi
+        done
+
+    - name: Upload checksums
+      uses: actions/upload-artifact@v2
+      with:
+        name: checksums
+        path: '*.sha256'
+
+  post-release:
+    needs: generate-checksums
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download checksums
+      uses: actions/download-artifact@v2
+      with:
+        name: checksums
+
+    - name: Create release notes with checksums
+      run: |
+        checksums=$(cat *.sha256)
+        gh release edit ${{ github.event.release.tag_name }} --notes "$checksums"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
