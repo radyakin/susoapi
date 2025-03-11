@@ -1,13 +1,13 @@
 /*
 
    Survey Solutions API class
-   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2022
+   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2025
 
 */
 
 class SuSo {
 
-  string wrapperver="1.40"
+  string wrapperver="1.43"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
