@@ -30,13 +30,11 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v4
+      - name: Upload PDF to release
+        id: upload-release-asset
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./manual/susoapi.pdf
-          asset_name: susoapi.pdf
-          asset_content_type: pdf
+          files: ./manual/susoapi.pdf
+          make_latest: true
