@@ -19,16 +19,16 @@ jobs:
           root_file: susoapi.tex
           working_directory: manual
 
-      - name: Create Release
-        id: create_release
-        uses: comnoco/create-release-action@v2.0.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
+  #    - name: Create Release
+  #      id: create_release
+  #      uses: comnoco/create-release-action@v2.0.5
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #      with:
+  #        tag_name: v${{ github.ref }}
+  #        release_name: Release ${{ github.ref }}
+  #        draft: false
+  #        prerelease: false
 
       - name: Upload PDF to release
         id: upload-release-asset
@@ -37,4 +37,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: ./manual/susoapi.pdf
-          make_latest: true
+  
