@@ -2057,6 +2057,7 @@ program define .interviews_varcomment
     // Add comment to a particular question
     .rostervectoraddress `rostervector'
     local rva=r(result)
+    if (`"`rva'"'==".") local rva=""
     python: interviews_varcomment("`interviewguid'", "`varname'", "`rva'", "`comment'")
      // Undocumented server response 406 if rosterVector is misspecified
 end
