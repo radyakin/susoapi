@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.44"
+  string wrapperver="1.54"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -287,9 +287,10 @@ def qx_list():
         Data.storeAt("qx_title",n,q["Title"])
         Data.storeAt("qx_var",n,q["Variable"])
         Data.storeAt("qx_lastentry",n,q["LastEntryDate"])
-    Macro.setLocal("status_code","200")
-    Scalar.setValue('r(status_code)',200)
-    return 200
+		
+  Macro.setLocal("status_code","200")
+  Scalar.setValue('r(status_code)',200)
+  return 200
 
 def qx_interviews(qguid, qversion):
   # // Returns the list of interviews for a given questionnaire in the current data area
