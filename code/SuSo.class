@@ -1,13 +1,13 @@
 /*
 
    Survey Solutions API class
-   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2025
+   Sergiy Radyakin, Тhе Wоrld Bаnk, 2020-2026
 
 */
 
 class SuSo {
 
-  string wrapperver="1.54"
+  string wrapperver="1.55"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -1415,7 +1415,7 @@ program define .new
     }
 
     if `"`0'"' != "" {
-        .set `0'
+        .set `macval(0)'
     }
 
     display as text "{break}"
@@ -1514,7 +1514,8 @@ program define .set
 
         .server    = "$SUSO_Server" 
         .username  = "$SUSO_User" 
-        .password  = "$SUSO_Password"
+        local psw : copy global SUSO_Password
+        .password  = `"`macval(psw)'"'
         .workspace = "$SUSO_Workspace"
 
         macro drop SUSO_Server SUSO_User SUSO_Password SUSO_Workspace
@@ -1522,7 +1523,7 @@ program define .set
     else {
         .server    = "`server'"
         .username  = "`username'"
-        .password  = "`password'"
+        .password  = `"`macval(password)'"'
         .workspace = "`workspace'"
     }
 end
