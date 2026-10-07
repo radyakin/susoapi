@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.55"
+  string wrapperver="1.56"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -607,7 +607,7 @@ def users_actionslog(guid, datefrom, dateto):
     if (datefrom!=""):
       period=f"start={datefrom}&end={dateto}"
 
-    URL=f"{get_server_url()}/api/v1/interviewers/'+guid+'/actions-log?{period}"
+    URL=f"{get_server_url()}/api/v1/interviewers/{guid}/actions-log?{period}"
 
     response=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
 
