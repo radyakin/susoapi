@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.56"
+  string wrapperver="1.57"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -1247,14 +1247,14 @@ def workspaces_list(userguid, includedisabled):
     sfx=f"UserId={userguid}"
   if (includedisabled):
     sfx=f"{sfx}&IncludeDisabled=true"
-  print(sfx)
+  
   URL=f'{get_server()}/api/v1/workspaces?{sfx}'
-  print(URL)
+  
   y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
   if (y.status_code==404):
     Scalar.setValue('r(status_code)',-10404)
     return -10404
-  print(y.json())
+  
   totalcount=y.json()["TotalCount"]
   if (read_property("verbose")=="true"):
     print(totalcount, " workspaces on the server ")
@@ -1263,7 +1263,7 @@ def workspaces_list(userguid, includedisabled):
   page=0
   while(const_pagesize*page<totalcount):
     page=page+1
-    URL=f"{get_server()}/api/v1/workspaces?length={const_pagesize}&start={const_pagesize*(page-1)}{sfx}"
+    URL=f"{get_server()}/api/v1/workspaces?length={const_pagesize}&start={const_pagesize*(page-1)}&{sfx}"
     if (read_property("verbose")=="true"):
       print("Processing page: ", page)
     y=requests.get(URL, headers=ajheader, data={}, auth=get_credentials())
