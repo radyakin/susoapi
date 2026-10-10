@@ -7,7 +7,7 @@
 
 class SuSo {
 
-  string wrapperver="1.57"
+  string wrapperver="1.58"
 
   string initdate          // e.g. " 6 Aug 2021"
   string inittime          // e.g. "12:32:54"
@@ -1447,35 +1447,35 @@ program define .new
     quietly pwf
     local cframe `"`=r(currentframe)'"'
 
+    python: Macro.setLocal("c",str(check()))
+    if (`c' < 0) exit 3333
+
     local printable ""
     local enabledws ""
     .users_reflect
+    .actualize_workspaces
 
     if (`"`.userworkspaces'"'!="")  {
-        quietly foreach w in `.userworkspaces' {
-            quietly ds // needed here, do not remove
-            .workspace="`w'"
-            capture noisily .workspaces_getdetails `w'
-            if (!missing(`"`r(Name)'"')) {
-              local enabledws=strtrim(`"`enabledws' `w'"')
-              local printable=strtrim(`"`printable' `w'"')
-            }
-            else {
-              local printable=strtrim(`"`printable' `w'*"')
-            }
+        forval i = 1 / `=`.wslist.arrnels'-0' {
+          local wsname=substr(`"`.wslist[`i']'"',1,strpos(`"`.wslist[`i']'"',"|")-1)
+          local wsstatus=cond(strpos(`"`wsname'"',"*")>0,"error","result")
+          local printable = strtrim(`"`printable' {`wsstatus':`wsname'}"')
         }
-        .workspace="`:word 1 of `enabledws''"
-        // todo: stop if there are no active workspaces
-        // Now check the server for responding
-        python: Macro.setLocal("c",str(check()))
-        if (`c' < 0) exit 3333
     }
     else {
-        .workspace=""
+        display as error "User has no access to any enabled workspaces!"
+        error 500
     }
 
+
+
+
+
+
+
+
     // Now display the user identity
-    .users_reflect
+
     display as text "{break}"
     display as text "User information:"
     display as text "- username: " as result "`.username'"
@@ -1526,8 +1526,8 @@ program define .set
         .password  = `"`macval(password)'"'
         .workspace = "`workspace'"
     }
+    if (`"`.workspace'"'=="") .workspace="primary"
 end
-
 program define .qx_document
     version 16.0
     syntax , qguid(string) qversion(integer) ///
@@ -2338,32 +2338,27 @@ program define .users_reflect
     .userrole="`userrole'"
     .userworkspaces="`userworkspaces'"
     .userid="`userid'"
-
-
 end
 
 program define .actualize_workspaces
     version 16.0
-
-    // preserve currently active workspace
-    local w=`"`.workspace'"'
+    capture .Declare array wslist
+    local c=1
 
     quietly foreach w in `.userworkspaces' {
         quietly ds // needed here, do not remove
-        .workspace="`w'"
         capture noisily .workspaces_getdetails `w'
-        if (!missing(`"`r(Name)'"')) {
+
+        if (missing(`"`r(DisabledAtUtc)'"')) {
           local enabledws=strtrim(`"`enabledws' `w'"')
+          .wslist[`c']=`"`w'|`r(DisplayName)'"'
         }
+        else {
+          .wslist[`c']="`w'*|`r(DisplayName)'"
+        }
+        local c=`c'+1
     }
-
     .userworkspacese = `"`enabledws'"'
-
-    // may be incorrect to set the active workspace to a workspace that
-    // may have been deleted, disabled, or became inaccessible to the
-    // user due to permissions
-
-    .workspace="`w'"
 end
 
 
@@ -2729,5 +2724,28 @@ program define read_property
     python: read_property("$prop")
 end
 
+
+program define .print_workspaces
+    // Print a list of workspace ids and labels.
+    // A * next to a workspace id denotes a disabled workspace.
+
+    version 16.0
+
+    syntax
+
+    local w=5 
+    forval i = 1 / `=`.wslist.arrnels'-0' {
+      local w=max(`w',strpos(`"`.wslist[`i']'"',"|")+2)
+    }
+
+    forval i = 1 / `=`.wslist.arrnels'-0' {
+      local sep=strpos(`"`.wslist[`i']'"',"|")
+      local wsname=substr(`"`.wslist[`i']'"',1,`sep'-1)
+      local wsstatus=cond(strpos(`"`wsname'"',"*")>0,"error","result")
+      local wslabel=substr(`"`.wslist[`i']'"',`sep'+1,.)
+      local printable = strtrim(`"{`wsstatus':`wsname'}"')
+      display as text `"`printable'"' _col(`w') `"`wslabel'"'
+    }
+end
 
 // END OF FILE
